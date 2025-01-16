@@ -68,115 +68,60 @@ create_kind_cluster(){
     echo "end create_kind_cluster() .."
 }
 
-istio(){
-    echo "start istio() .." 
-    if [[ -f "$FILE_PATH_istio" && -f "$FILE_PATH_istio_2" ]]; then
-        echo "文件" $FILE_PATH_istio "and" $FILE_PATH_istio_2 "存在..."
-        cd $FOLDER_PATH_download/istio-$istio_version
-        export PATH=$FOLDER_PATH_download/istio-$istio_version/bin:$PATH
-        pushd $FOLDER_PATH_certs
+# istio(){
+#     echo "start istio() .." 
+#     if [[ -f "$FILE_PATH_istio" && -f "$FILE_PATH_istio_2" ]]; then
+#         echo "文件" $FILE_PATH_istio "and" $FILE_PATH_istio_2 "存在..."
+#         cd $FOLDER_PATH_download/istio-$istio_version
+#         export PATH=$FOLDER_PATH_download/istio-$istio_version/bin:$PATH
+#         pushd $FOLDER_PATH_certs
 
-        if [[ "$cluster_mode" == "multi" ]]; then   
-            # 創建多集群模式下Istio
-            kubectl --context=$CTX_CLUSTER1 create namespace istio-system
-            kubectl --context=$CTX_CLUSTER1 create secret generic cacerts -n istio-system \
-                --from-file=cluster1/ca-cert.pem \
-                --from-file=cluster1/ca-key.pem \
-                --from-file=cluster1/root-cert.pem \
-                --from-file=cluster1/cert-chain.pem
-            echo $FILE_PATH_istio
-            istioctl install --context="${CTX_CLUSTER1}"  -y -f $FILE_PATH_istio
+#         if [[ "$cluster_mode" == "multi" ]]; then   
+#             # 創建多集群模式下Istio
+#             kubectl --context=$CTX_CLUSTER1 create namespace istio-system
+#             kubectl --context=$CTX_CLUSTER1 create secret generic cacerts -n istio-system \
+#                 --from-file=cluster1/ca-cert.pem \
+#                 --from-file=cluster1/ca-key.pem \
+#                 --from-file=cluster1/root-cert.pem \
+#                 --from-file=cluster1/cert-chain.pem
+#             echo $FILE_PATH_istio
+#             istioctl install --context="${CTX_CLUSTER1}"  -y -f $FILE_PATH_istio
 
-            kubectl --context=$CTX_CLUSTER2 create namespace istio-system
-            kubectl --context=$CTX_CLUSTER2 create secret generic cacerts -n istio-system \
-                --from-file=cluster2/ca-cert.pem \
-                --from-file=cluster2/ca-key.pem \
-                --from-file=cluster2/root-cert.pem \
-                --from-file=cluster2/cert-chain.pem
-            echo $FILE_PATH_istio_2
-            istioctl install --context="${CTX_CLUSTER2}"  -y -f $FILE_PATH_istio_2
+#             kubectl --context=$CTX_CLUSTER2 create namespace istio-system
+#             kubectl --context=$CTX_CLUSTER2 create secret generic cacerts -n istio-system \
+#                 --from-file=cluster2/ca-cert.pem \
+#                 --from-file=cluster2/ca-key.pem \
+#                 --from-file=cluster2/root-cert.pem \
+#                 --from-file=cluster2/cert-chain.pem
+#             echo $FILE_PATH_istio_2
+#             istioctl install --context="${CTX_CLUSTER2}"  -y -f $FILE_PATH_istio_2
             
-        elif [[ "$cluster_mode" == "single" ]]; then
-            # 單集群模式Istio
-            export CTX_CLUSTER1=kind-c1
-            kubectl --context=$CTX_CLUSTER1 create namespace istio-system
-            kubectl --context=$CTX_CLUSTER1 create secret generic cacerts -n istio-system \
-                --from-file=cluster1/ca-cert.pem \
-                --from-file=cluster1/ca-key.pem \
-                --from-file=cluster1/root-cert.pem \
-                --from-file=cluster1/cert-chain.pem
-            echo $FILE_PATH_istio
-            istioctl install --context="${CTX_CLUSTER1}"  -y -f $FILE_PATH_istio                
-        else
-            echo "please check agin : $cluster_mode 。"
-            exit 1
-        fi
-    else
-      echo "文件 $FILE_PATH_istio or $FILE_PATH_istio_2 不存在，终止。"
-      exit 1
-    fi
-}
-
-# prometheus(){
-#     echo "start prometheus() .."
-#     if [ -f "$FILE_PATH_prometheus" ]; then 
-#         echo "文件 $FILE_PATH_prometheus 存在..."
-#         if [[ "$cluster_mode" == "multi" ]]; then
-#             kubectl --context=$CTX_CLUSTER1 apply  -f $FILE_PATH_prometheus  
-#             kubectl --context=$CTX_CLUSTER2 apply  -f $FILE_PATH_prometheus  
-#         elif [[ "$cluster_mode" == "single" ]]; then    
-#             kubectl --context=$CTX_CLUSTER1 apply  -f $FILE_PATH_prometheus            
-#         else
-#             echo "please check agin : $cluster_mode 。"
-#             exit 1
-#         fi
-#     else
-#       echo "文件 $FILE_PATH_prometheus 不存在，终止。"
-#     fi
-#     echo "end prometheus() .."
-# }
-
-# kiali(){
-#     echo "start kiali() .."
-#     if [ -f "$FILE_PATH_kiali" ]; then
-#         # docker pull quay.io/kiali/kiali/kiali-operator:$kiali_version
-#         # docker pull quay.io/kiali/kiali:$kiali_version
-#         if [[ "$cluster_mode" == "multi" ]]; then
-#             kind load docker-image quay.io/kiali/kiali-operator:$kiali_version --name c1
-#             kind load docker-image quay.io/kiali/kiali:$kiali_version --name c1
-#             helm install --kube-context=kind-c1  --namespace=istio-system --create-namespace kiali-operator-1  $FOLDER_PATH_kiali
-
-#             kind load docker-image quay.io/kiali/kiali-operator:$kiali_version --name c2
-#             kind load docker-image quay.io/kiali/kiali:$kiali_version --name c2
-#             helm install --kube-context=kind-c2  --namespace=istio-system --create-namespace kiali-operator-2  $FOLDER_PATH_kiali
 #         elif [[ "$cluster_mode" == "single" ]]; then
-#             kind load docker-image quay.io/kiali/kiali-operator:$kiali_version --name c1
-#             kind load docker-image quay.io/kiali/kiali:$kiali_version --name c1
-#             helm install --kube-context=kind-c1  --namespace=istio-system --create-namespace kiali-operator-1  $FOLDER_PATH_kiali           
+#             # 單集群模式Istio
+#             export CTX_CLUSTER1=kind-c1
+#             kubectl --context=$CTX_CLUSTER1 create namespace istio-system
+#             kubectl --context=$CTX_CLUSTER1 create secret generic cacerts -n istio-system \
+#                 --from-file=cluster1/ca-cert.pem \
+#                 --from-file=cluster1/ca-key.pem \
+#                 --from-file=cluster1/root-cert.pem \
+#                 --from-file=cluster1/cert-chain.pem
+#             echo $FILE_PATH_istio
+#             istioctl install --context="${CTX_CLUSTER1}"  -y -f $FILE_PATH_istio                
 #         else
 #             echo "please check agin : $cluster_mode 。"
 #             exit 1
 #         fi
 #     else
-#       echo "文件 $FILE_PATH_kiali 不存在，终止。"
+#       echo "文件 $FILE_PATH_istio or $FILE_PATH_istio_2 不存在，终止。"
+#       exit 1
 #     fi
-#     echo "end kiali() .."
 # }
 
 main(){
     pretask
     delete_kind_cluster
-    create_kind_cluster
-    istio
-    # prometheus
-    # kiali    
+    create_kind_cluster    
 }
-
-# if [[ $# -eq 0 ]]; then
-#     echo "Usage: $0 <process_name>"
-#     echo "Available processes: ${available_processes[*]}"
-#     exit 1
-# fi
 
 input_process="$1"
 input_process=${input_process:-main}

@@ -44,22 +44,26 @@ validation(){
   fi
 }
 
-
-istiod_status=$(kubectl get pod -n istio-system -l app=istiod -o jsonpath='{.items[0].status.phase}')
-echo "istiod_status is" $istiod_status
+# istiod_status=$(kubectl get pod -n istio-system -l app=istiod -o jsonpath='{.items[0].status.phase}')
+# echo "istiod_status is" $istiod_status
 namespace_exists=$(kubectl get ns metallb-system --ignore-not-found)
 
-if [[ "$istiod_status" == "Running" && -z "$namespace_exists" ]]; then
+if [[  -z "$namespace_exists" ]]; then
     main_task
     validation
-else
-    if [[ "$istiod_status" != "Running" ]]; then
-        echo "Waiting for istiod Pod to be Running in the istio-system namespace..."
-    fi
-    if [[ -n "$namespace_exists" ]]; then
-        echo "Namespace 'metallb-system' already exists."
-    fi
 fi
+
+# if [[ "$istiod_status" == "Running" && -z "$namespace_exists" ]]; then
+#     main_task
+#     validation
+# else
+#     if [[ "$istiod_status" != "Running" ]]; then
+#         echo "Waiting for istiod Pod to be Running in the istio-system namespace..."
+#     fi
+#     if [[ -n "$namespace_exists" ]]; then
+#         echo "Namespace 'metallb-system' already exists."
+#     fi
+# fi
 
 exit 0
 
