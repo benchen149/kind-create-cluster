@@ -134,4 +134,5 @@ kubectl -n test create secret tls ngx-service-tls \
 kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
 istioctl x uninstall --revision=1-17-3
 code --no-sandbox --user-data-dir="/path/to/your/directory"
+git push -u origin 12-feat-develop
 ```
