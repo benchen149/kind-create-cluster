@@ -111,6 +111,24 @@ function git_branch {
 export PS1='\u@\h \[\033[01;36m\]\W\[\033[01;32m\]$(git_branch)\[\033[00m\] \$ '
 ```
 
+## 產生tls secret
+```
+openssl req -x509 -nodes -days 365 \
+  -newkey rsa:2048 \
+  -keyout tls.key \
+  -out tls.crt \
+  -subj "/CN=ngx-service.app.c3.dev.com/O=MyOrganization
+
+ls -l tls.crt tls.key
+
+openssl x509 -in tls.crt -text -noout
+
+kubectl -n test create secret tls ngx-service-tls \
+  --cert=tls.crt \
+  --key=tls.key \
+  -n test 
+```
+
 ## others
 ```
 kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
