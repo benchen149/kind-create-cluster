@@ -1,0 +1,15 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-sample-to-sample3
+  namespace: sample3
+spec:
+  selector:
+    matchLabels:
+      app: helloworld
+  action: DENY
+  rules:
+  - from:
+    - source:
+        namespaces: ["sample"]
+

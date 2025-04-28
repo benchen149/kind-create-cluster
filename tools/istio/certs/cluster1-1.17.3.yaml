@@ -1,0 +1,49 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  profile: default
+  revision: 1-17-3
+  meshConfig:
+    accessLogFile: /dev/stdout
+    defaultConfig:
+      holdApplicationUntilProxyStarts: true
+  components:
+    ingressGateways:
+    - enabled: true
+      name: istio-ingressgateway 
+      k8s:
+        hpaSpec:
+          minReplicas: 1
+          maxReplicas: 1
+        overlays:
+        - apiVersion: apps/v1
+          kind: Service
+          name: istio-ingressgateway
+          patches:
+            - path: spec.type
+              value: ClusterIP
+    pilot:
+      k8s:
+        env:
+          - name: PILOT_FILTER_GATEWAY_CLUSTER_CONFIG
+            value: "true"
+          - name: PILOT_HTTP10
+            value: "true"
+        overlays:
+        - apiVersion: apps/v1
+          kind: Deployment
+          name: istiod-1-17-3
+        - apiVersion: autoscaling/v1
+          kind: HorizontalPodAutoscaler
+          name: istiod-1-17-3
+          patches:
+          - path: spec.minReplicas
+            value: 1
+          - path: spec.maxReplicas
+            value: 1  
+  values:
+    global:     
+      meshID: mesh1
+      multiCluster:
+        clusterName: cluster1
+      network: network1

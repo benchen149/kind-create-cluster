@@ -1,0 +1,23 @@
+name: Smoke test latest release
+
+on:
+  pull_request:
+    types:
+    - opened
+    - reopened
+    - synchronize
+    branches:
+    - master
+    paths:
+    - 'docs/index.yaml'
+
+jobs:
+  smoketest:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run smoke test hack script
+      run: hack/smoke-test-release-branch.sh --release-branch ${{ github.head_ref }}
+

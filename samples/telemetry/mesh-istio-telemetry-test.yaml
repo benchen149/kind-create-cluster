@@ -1,0 +1,19 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: mesh-istio-telemetry-test
+spec:
+  metrics:
+    - overrides:
+        - match:
+            metric: GRPC_RESPONSE_MESSAGES
+            mode: CLIENT_AND_SERVER
+          disabled: true
+        - tagOverrides:
+            url:
+              value: "request.url_path"
+        - match:
+            metric: ALL_METRICS
+          tagOverrides:
+            source_workload:
+              operation: REMOVE

@@ -1,0 +1,40 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: drop-istio-stats
+spec:
+  workloadSelector:
+    labels:
+      app: helloworld
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: ANY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: MERGE
+        value:
+          name: istio.stats
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm"
+            config:
+              root_id: "stats_outbound"
+              vm_config:
+                runtime: "envoy.wasm.runtime.null"
+                vm_id: "stats_outbound"
+                code:
+                  local:
+                    inline_string: "envoy.wasm.stats"
+              configuration:
+                "@type": "type.googleapis.com/google.protobuf.StringValue"
+                value: |
+                  {
+                    "metrics": {
+                      "drop": "true"
+                    }
+                  }
