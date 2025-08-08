@@ -2,7 +2,7 @@
 
 ---
 
-#### 目錄架構
+#### Directory Structure
 
 ```
 kind-create-cluster/
