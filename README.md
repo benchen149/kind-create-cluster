@@ -3,7 +3,7 @@
 ---
 
 #### 目錄架構
-```
+
 kind-create-cluster/
 ├── Docker/ # 與 Docker 相關的資源
 ├── config/ # Kubernetes 叢集的設定檔
