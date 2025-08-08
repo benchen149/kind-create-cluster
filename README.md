@@ -4,6 +4,7 @@
 
 #### 目錄架構
 
+```
 kind-create-cluster/
 ├── Docker/ # 與 Docker 相關的資源
 ├── config/ # Kubernetes 叢集的設定檔
@@ -12,61 +13,61 @@ kind-create-cluster/
 ├── test/ # 測試相關資源
 ├── tools/ # 工具或輔助程式
 └── README.md # 專案說明文件
+```
 
-
-## kiali/prometheus
+#### kiali/prometheus
 ```
 kubectl --context kind-c1 port-forward svc/kiali -n istio-system 20001:20001
 http://localhost:20001/kiali
 istioctl  --context kind-c1 dashboard prometheus
 ```
 
-## List all prometheuse metrics
+#### List all prometheuse metrics
 ```
 http://localhost:9090/api/v1/label/__name__/values
 ```
 
-## helm install/upgrade/uninstall
+#### helm install/upgrade/uninstall
 ```
 helm install    --kube-context=kind-c1  --namespace=istio-system --create-namespace kiali-operator-1  kiali-operator/
 helm upgrade    --kube-context=kind-c1  --namespace=istio-system --create-namespace kiali-operator-1  kiali-operator/
 helm uninstall  --kube-context=kind-c1  --namespace istio-system  kiali-operator-1 
 ```
 
-## docker build
+#### docker build
 ```
 docker build -t quay.io/kiali/kiali:v1.49.0-2 .
 ```
 
-## kind load image to node
+#### kind load image to node
 ```
 kind load docker-image quay.io/kiali/kiali-operator:v1.87.0 --name c1
 kind load docker-image quay.io/kiali/kiali:v1.87.0 --name c1
 ```
 
-## start vscode
+#### start vscode
 ```
 sudo code --no-sandbox --user-data-dir="/path/to/your/directory"
 ```
 
-## force delete namespace
+#### force delete namespace
 ```
 k1 get namespace istio-system -o json | jq '.spec.finalizers=[]' | k1 replace --raw "/api/v1/namespaces/istio-system/finalize" -f -
 ```
 
-## test/istio consistent hash
+#### test/istio consistent hash
 ```
 k1 -n sample exec -it helloworld-v1-77cb56d4b4-svsnl -- curl -s helloworld.sample3.svc.cluster.local:5000/hello
 k1 -n sample exec -it helloworld-v1-77cb56d4b4-svsnl -- curl -s -H "X-User: abc" helloworld.sample3.svc.cluster.local:5000/hello
 ```
 
-## metallb 
+#### metallb 
 ```
 docker network inspect -f '{{.IPAM.Config}}' kind
 curl 172.18.0.100
 ```
 
-## perf-tests/clusterloader2
+#### perf-tests/clusterloader2
 install gvm
 ```
 sudo apt-get install bison
@@ -83,7 +84,7 @@ search keywords(gvm) and remove [[ -s "$GVM_ROOT/scripts/gvm" ]] && source "$GVM
 source ~/.bashrc  
 ```
 
-## switch mode (sidecar/ambient)
+#### switch mode (sidecar/ambient)
 開啟 ambient mode (namespace level)
 ```
 k1 label ns sample istio.io/dataplane-mode=ambient
@@ -108,7 +109,7 @@ k1 label ns sample istio.io/rev-
 k1 -n sample delete po --all
 ```
 
-## Show Git branch
+#### Show Git branch
 ```
 function git_branch {
    branch="`git branch 2>/dev/null | grep "^\*" | sed -e "s/^\*\ //"`"
@@ -123,7 +124,7 @@ function git_branch {
 export PS1='\u@\h \[\033[01;36m\]\W\[\033[01;32m\]$(git_branch)\[\033[00m\] \$ '
 ```
 
-## 產生tls secret
+#### 產生tls secret
 ```
 openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
@@ -141,7 +142,7 @@ kubectl -n test create secret tls ngx-service-tls \
   -n test 
 ```
 
-## others
+#### others
 ```
 kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
 istioctl x uninstall --revision=1-17-3
