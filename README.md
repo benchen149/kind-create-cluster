@@ -15,7 +15,7 @@ kind-create-cluster/
 └── README.md # 專案說明文件
 ```
 
-# Getting Started
+#### Getting Started
 
 1. **Update Configurations**  
    Modify the configuration files to set the required versions for **Kind**, **Istio**, **Kiali**, and other related components.
