@@ -15,6 +15,17 @@ kind-create-cluster/
 └── README.md # 專案說明文件
 ```
 
+#### Getting Started
+Update the configuration files to set the required versions for Kind, Istio, Kiali, and other related components.
+
+Review the steps defined in script/main to understand the execution flow.
+
+Run the following command to start:
+
+```
+./script/main.sh
+```
+
 #### kiali/prometheus
 ```
 kubectl --context kind-c1 port-forward svc/kiali -n istio-system 20001:20001
