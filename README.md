@@ -6,13 +6,13 @@
 
 ```
 kind-create-cluster/
-├── Docker/ # 與 Docker 相關的資源
-├── config/ # Kubernetes 叢集的設定檔
-├── samples/ # 範例 YAML 檔案
-├── scripts/ # 自動化腳本
-├── test/ # 測試相關資源
-├── tools/ # 工具或輔助程式
-└── README.md # 專案說明文件
+├── Docker/   # Resources related to Docker
+├── config/   # Kubernetes configuration files
+├── samples/  # Example YAML files
+├── scripts/  # Automation scripts
+├── test/     # Testing-related resources
+├── tools/    # Utilities or helper programs
+└── README.md # Project documentation
 ```
 
 #### Getting Started
