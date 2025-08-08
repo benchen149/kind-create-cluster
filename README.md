@@ -15,16 +15,19 @@ kind-create-cluster/
 └── README.md # 專案說明文件
 ```
 
-#### Getting Started
-Update the configuration files to set the required versions for Kind, Istio, Kiali, and other related components.
+# Getting Started
 
-Review the steps defined in script/main to understand the execution flow.
+1. **Update Configurations**  
+   Modify the configuration files to set the required versions for **Kind**, **Istio**, **Kiali**, and other related components.
 
-Run the following command to start:
+2. **Review Execution Steps**  
+   Check the steps defined in `script/main` to understand the execution flow.
 
-```
-./script/main.sh
-```
+3. **Run the Script**  
+   Execute the following command to start:
+   ```bash
+   ./script/main.sh
+
 
 #### kiali/prometheus
 ```
