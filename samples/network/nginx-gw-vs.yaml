@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: infrachk-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - nginx-service.app.dev.com
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: infrachk-vs
+spec:
+  gateways:
+  - infrachk-gateway
+  hosts:
+  - nginx-service.app.dev.com
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: nginx.default.svc.cluster.local
+        port:
+          number: 80
