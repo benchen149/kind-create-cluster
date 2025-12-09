@@ -29,7 +29,7 @@ kind-create-cluster/
    ./script/main.sh
    ```
 
-#### Common Commands
+#### Frequently used commands
 ```
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
 wget "https://github.com/istio/istio/releases/download/1.25.5/istio-1.25.5-linux-amd64.tar.gz" -O - | tar -xz 
