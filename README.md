@@ -29,6 +29,15 @@ kind-create-cluster/
    ./script/main.sh
    ```
 
+#### Common Commands
+```
+[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
+wget "https://github.com/istio/istio/releases/download/1.25.5/istio-1.25.5-linux-amd64.tar.gz" -O - | tar -xz 
+cp tools/istio/certs/cluster1-1.24.0.yaml  .
+mv cluster1-1.24.0.yaml cluster-1.24.0.yaml
+istioctl install -y -f cluster-1.24.0.yaml
+
+```
 
 #### kiali/prometheus
 ```
