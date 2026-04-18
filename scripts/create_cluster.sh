@@ -47,20 +47,49 @@ delete_kind_cluster(){
             done
             fi
         fi
+    sudo rm -rf /home/ben/.kind/etcd-c1 && mkdir -p /home/ben/.kind/etcd-c1
     echo "end delete_kind_cluster() .."
+}
+
+get_node_image(){
+    case "$kind_version" in
+        v0.14.0) echo "kindest/node:v1.24.0" ;;
+        v0.23.0) echo "kindest/node:v1.27.3" ;;
+        v0.26.0) echo "kindest/node:v1.29.2" ;;
+        *) echo "" ;;
+    esac
+}
+
+build_kind_config(){
+    local base_config="$1"
+    local tmp_config
+    tmp_config=$(mktemp /tmp/kind-config.XXXXXX.yaml)
+    cp "$base_config" "$tmp_config"
+    # extraMounts on /var/lib/etcd only works on kind v0.26.0+
+    if [[ "$kind_version" == "v0.26.0" ]]; then
+        mkdir -p /home/ben/.kind/etcd-c1
+        cat >> "$tmp_config" << 'EOF'
+    extraMounts:
+      - hostPath: /home/ben/.kind/etcd-c1
+        containerPath: /var/lib/etcd
+EOF
+    fi
+    echo "$tmp_config"
 }
 
 create_kind_cluster(){
     echo "start create_kind_cluster() .."
+    local node_image=$(get_node_image)
+    local image_flag=""
+    [[ -n "$node_image" ]] && image_flag="--image=$node_image"
+
     if [[ "$cluster_mode" == "multi" ]]; then
-        # 創建多集群模式下的集群
         echo "創建集群 c1 和 c2"
-        kind create cluster --name=c1 --config="$FILE_PATH_kind"
-        kind create cluster --name=c2 --config="$FILE_PATH_kind_2"
+        kind create cluster --name=c1 $image_flag --config="$(build_kind_config $FILE_PATH_kind)"
+        kind create cluster --name=c2 $image_flag --config="$FILE_PATH_kind_2"
     elif [[ "$cluster_mode" == "single" ]]; then
-        # 單集群模式
         echo "創建集群 c1"
-        kind create cluster --name=c1 --config=$FILE_PATH_kind
+        kind create cluster --name=c1 $image_flag --config="$(build_kind_config $FILE_PATH_kind)"
     else
         echo "please check agin :  $cluster_mode 。"
         exit 1

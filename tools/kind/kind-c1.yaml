@@ -22,6 +22,3 @@ nodes:
       - |
         kind: KubeletConfiguration
         maxPods: 250
-    extraMounts:
-      - hostPath: /tmp/kind-etcd-c1
-        containerPath: /var/lib/etcd
