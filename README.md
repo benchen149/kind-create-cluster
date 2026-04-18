@@ -10,7 +10,6 @@ kind-create-cluster/
 ├── config/   # Kubernetes configuration files
 ├── samples/  # Example YAML files
 ├── scripts/  # Automation scripts
-├── test/     # Testing-related resources
 ├── tools/    # Utilities or helper programs
 └── README.md # Project documentation
 ```
@@ -21,17 +20,18 @@ kind-create-cluster/
    Modify the configuration files to set the required versions for **Kind**, **Istio**, **Kiali**, and other related components.
 
 2. **Review Execution Steps**  
-   Check the steps defined in `script/main` to understand the execution flow.
+   Check the steps defined in `scripts/main.sh` to understand the execution flow.
 
 3. **Run the Script**  
    Execute the following command to start:
    ```
-   ./script/main.sh
+   ./scripts/main.sh
    ```
 
 #### Frequently used commands
 ```
-[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.26.0/kind-linux-amd64
+# kind version is defined in config/config.env (kind_version)
+[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/${kind_version}/kind-linux-amd64
 wget "https://github.com/istio/istio/releases/download/1.25.5/istio-1.25.5-linux-amd64.tar.gz" -O - | tar -xz 
 cp tools/istio/certs/cluster1-1.24.0.yaml  .
 mv cluster1-1.24.0.yaml cluster-1.24.0.yaml
@@ -171,5 +171,4 @@ kubectl -n test create secret tls ngx-service-tls \
 kubectl patch svc istio-ingressgateway -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
 istioctl x uninstall --revision=1-17-3
 code --no-sandbox --user-data-dir="/path/to/your/directory"
-git push -u origin 12-feat-develop
 ```
