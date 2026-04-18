@@ -1,0 +1,68 @@
+# GitHub Flow 自動化
+
+執行完整的 GitHub issue → branch → PR → merge 工作流程。
+
+## 使用方式
+
+```
+/github-flow
+```
+
+執行後會依序引導你完成以下步驟。
+
+## 執行流程
+
+### Step 1：收集資訊
+詢問使用者：
+- **Issue 標題**（例如：`feat: add xxx`）
+- **Issue 描述**（問題背景、預計異動）
+- **Branch slug**（例如：`add-xxx`，會自動加上 issue 編號變成 `{number}-add-xxx`）
+- **目標 base branch**（預設 `1-feat-develop`）
+
+### Step 2：開 GitHub Issue
+使用 GitHub API 建立 issue，取得 issue 編號。
+
+```bash
+curl -s -X POST \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/repos/benchen149/kind-create-cluster/issues \
+  -d "{\"title\": \"$TITLE\", \"body\": \"$BODY\"}"
+```
+
+### Step 3：建立並切換 branch
+```bash
+git checkout $BASE_BRANCH
+git pull origin $BASE_BRANCH
+git checkout -b {issue-number}-$SLUG
+```
+
+### Step 4：等待使用者完成改動
+提示使用者進行程式碼修改，完成後告知 Claude 繼續。
+
+### Step 5：Commit & Push
+```bash
+git add <changed files>
+git commit -m "feat/fix/chore: $TITLE
+
+$DESCRIPTION
+
+Closes #{issue-number}"
+git push origin {issue-number}-$SLUG
+```
+
+### Step 6：開 Pull Request
+使用 GitHub API 建立 PR，base 指向 `$BASE_BRANCH`。
+
+### Step 7：確認是否 merge
+詢問使用者是否直接 merge，若是則：
+- merge PR（`merge_method: merge`）
+- sync local base branch（`git pull origin $BASE_BRANCH`）
+- 詢問是否刪除 feature branch（local + remote）
+
+## 注意事項
+
+- `GITHUB_TOKEN` 需要有 Contents / Issues / Pull requests 的 Read and write 權限
+- 若環境沒有 `GITHUB_TOKEN`，流程開始前會提示設定
+- base branch 預設為 `1-feat-develop`，若要 merge 到 `main` 請在 Step 1 指定
+- feature branch merge 後是否刪除由使用者決定，`1-feat-develop` 等長期 branch 不刪除
