@@ -1,7 +1,24 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+name: c1
 networking:
   podSubnet: "172.18.10.0/24"
+
 nodes:
-# the control plane node config
-- role: control-plane
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+          extraArgs:
+            max-requests-inflight: "2000"
+            max-mutating-requests-inflight: "1000"
+            default-watch-cache-size: "500"
+        etcd:
+          local:
+            extraArgs:
+              quota-backend-bytes: "8589934592"   # 8Gi
+              snapshot-count: "5000"
+      - |
+        kind: KubeletConfiguration
+        maxPods: 250
