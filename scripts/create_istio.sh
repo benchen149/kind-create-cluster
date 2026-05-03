@@ -21,7 +21,7 @@ istio(){
                 --from-file=cluster1/root-cert.pem \
                 --from-file=cluster1/cert-chain.pem
             echo $FILE_PATH_istio
-            istioctl install --context="${CTX_CLUSTER1}"  -y -f $FILE_PATH_istio
+            envsubst '$istio_label' < $FILE_PATH_istio | istioctl install --context="${CTX_CLUSTER1}" -y -f -
 
             kubectl --context=$CTX_CLUSTER2 create namespace istio-system
             kubectl --context=$CTX_CLUSTER2 create secret generic cacerts -n istio-system \
@@ -30,7 +30,7 @@ istio(){
                 --from-file=cluster2/root-cert.pem \
                 --from-file=cluster2/cert-chain.pem
             echo $FILE_PATH_istio_2
-            istioctl install --context="${CTX_CLUSTER2}"  -y -f $FILE_PATH_istio_2
+            envsubst '$istio_label' < $FILE_PATH_istio_2 | istioctl install --context="${CTX_CLUSTER2}" -y -f -
             
         elif [[ "$cluster_mode" == "single" ]]; then
             # 單集群模式Istio
@@ -42,7 +42,7 @@ istio(){
                 --from-file=cluster1/root-cert.pem \
                 --from-file=cluster1/cert-chain.pem
             echo $FILE_PATH_istio
-            istioctl install --context="${CTX_CLUSTER1}"  -y -f $FILE_PATH_istio                
+            envsubst '$istio_label' < $FILE_PATH_istio | istioctl install --context="${CTX_CLUSTER1}" -y -f -
         else
             echo "please check agin : $cluster_mode 。"
             exit 1

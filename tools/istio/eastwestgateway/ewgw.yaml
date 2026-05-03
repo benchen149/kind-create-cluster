@@ -3,7 +3,7 @@ kind: IstioOperator
 metadata:
   name: eastwest
 spec:
-  revision: 1-24-0
+  revision: ${istio_label}
   profile: empty
   components:
     ingressGateways:
