@@ -1,0 +1,13 @@
+# Service stub on c1 — no local pods, allows DNS resolution of
+# mysql.istio-validation.svc.cluster.local from c1.
+# Istio discovers c2 endpoints via remote secret and routes through east-west gateway.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+    targetPort: 3306

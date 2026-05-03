@@ -143,6 +143,91 @@ IP 172.18.10.x.xxxxx > 172.18.0.x.15443: Flags [.]    ← ACK (mTLS handshake)
 
 > **Note**: run tcpdump on **c2 node**, not c1 — the destination of cross-cluster traffic is c2's east-west gateway.
 
+#### Graceful Drain Test — long-lived connection behavior (issue #30)
+
+Verify that existing connections persist through port 15443 after removing the topology label,
+and that restarting the ewgw pod forcefully breaks them.
+
+**Deploy test resources**
+```bash
+# c2 — MySQL server
+kubectl --context kind-c2 apply -n istio-validation -f samples/ewgw/mysql-server.yaml
+
+# c1 — mysql client pod + Service stub (enables cross-cluster DNS resolution)
+kubectl --context kind-c1 apply -n istio-validation -f samples/ewgw/mysql-client.yaml
+kubectl --context kind-c1 apply -n istio-validation -f samples/ewgw/mysql-service-c1.yaml
+
+kubectl --context kind-c2 rollout status deployment/mysql -n istio-validation --timeout=120s
+kubectl --context kind-c1 rollout status deployment/mysql-client -n istio-validation --timeout=120s
+```
+
+**Check how many connections are active through ewgw**
+```bash
+kubectl --context kind-c2 exec -n istio-system deploy/istio-eastwestgateway -c istio-proxy -- \
+  ss -tn state established | grep ':15443' | wc -l
+```
+
+**Phase 1 — establish long-lived connection and confirm routing via 15443**
+
+Terminal A (tcpdump):
+```bash
+docker exec -it c2-control-plane tcpdump -i any port 15443 -nn
+```
+
+Terminal B (long-running query):
+```bash
+kubectl --context kind-c1 exec -n istio-validation deploy/mysql-client -c client -- \
+  mysql -h mysql.istio-validation.svc.cluster.local -uroot -proot \
+  -e "SELECT '=== start ==='; SELECT SLEEP(120); SELECT '=== end ===';"
+```
+
+**Phase 2 — remove topology label (graceful drain step 1)**
+```bash
+# Stop new connections from entering ewgw
+kubectl --context kind-c2 label service istio-eastwestgateway \
+  -n istio-system topology.istio.io/network-
+
+# Confirm new endpoint is now direct pod IP
+kubectl --context kind-c1 exec -n istio-validation deploy/mysql-client -c client -- \
+  curl -s localhost:15000/clusters | grep mysql | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+' | sort -u
+```
+
+| Observation | Expected |
+|---|---|
+| Terminal A tcpdump | Existing connection still shows 15443 packets |
+| Envoy cluster stats | New endpoint changed to `pod-ip:3306` |
+| MySQL PROCESSLIST | SLEEP query still running |
+| `ss \| grep 15443 \| wc -l` | Still > 0 until SLEEP ends |
+
+**Phase 3 — restart ewgw pod (force disconnect)**
+```bash
+# Re-add label first so reconnection goes through ewgw (for test purposes)
+kubectl --context kind-c2 label service istio-eastwestgateway \
+  -n istio-system topology.istio.io/network=network2
+
+# Start another SLEEP, then restart pod
+kubectl --context kind-c2 rollout restart deployment/istio-eastwestgateway -n istio-system
+```
+
+| Observation | Expected |
+|---|---|
+| MySQL PROCESSLIST | SLEEP session disappears within 5s (TCP RST after terminationDrainDuration) |
+| Terminal B | `ERROR 2013: Lost connection to MySQL server` |
+
+**Key findings**
+
+| Action | Effect on existing connections |
+|---|---|
+| Remove topology label | Connections persist until naturally closed (safe for graceful drain) |
+| `rollout restart` ewgw pod | Connections broken within `terminationDrainDuration` (default 5s) |
+
+**Correct graceful drain sequence**
+```
+1. Remove topology label      → stop new traffic entering ewgw
+2. Wait: ss | grep 15443 | wc -l == 0   → all connections drained
+3. rollout restart / scale 0  → safe to remove pod, no active connections
+```
+
 #### Frequently used commands
 ```
 # kind version is defined in config/config.env (kind_version)
