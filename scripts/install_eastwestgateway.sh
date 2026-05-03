@@ -48,10 +48,10 @@ install_eastwestgateway(){
     kubectl --context="${CTX_CLUSTER2}" apply -f $FILE_PATH_expose
 
     echo "Restarting workloads to pick up network labels ..."
-    for ns in $(kubectl --context="${CTX_CLUSTER1}" get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -v "kube-\|istio-\|metallb"); do
+    for ns in $(kubectl --context="${CTX_CLUSTER1}" get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -v "^kube-\|^istio-system$\|^metallb-system$"); do
         kubectl --context="${CTX_CLUSTER1}" rollout restart deployment -n "$ns" 2>/dev/null || true
     done
-    for ns in $(kubectl --context="${CTX_CLUSTER2}" get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -v "kube-\|istio-\|metallb"); do
+    for ns in $(kubectl --context="${CTX_CLUSTER2}" get ns -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -v "^kube-\|^istio-system$\|^metallb-system$"); do
         kubectl --context="${CTX_CLUSTER2}" rollout restart deployment -n "$ns" 2>/dev/null || true
     done
 
