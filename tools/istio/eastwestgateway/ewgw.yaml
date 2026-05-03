@@ -11,14 +11,14 @@ spec:
         label:
           istio: eastwestgateway
           app: istio-eastwestgateway
-          topology.istio.io/network: network1
+          topology.istio.io/network: ${network_id}
         enabled: true
         k8s:
           env:
             - name: ISTIO_META_ROUTER_MODE
               value: "sni-dnat"
             - name: ISTIO_META_REQUESTED_NETWORK_VIEW
-              value: network1
+              value: ${network_id}
           service:
             ports:
               - name: status-port
@@ -38,4 +38,4 @@ spec:
       istio-ingressgateway:
         injectionTemplate: gateway
     global:
-      network: network1
+      network: ${network_id}

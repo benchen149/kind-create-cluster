@@ -39,15 +39,26 @@ kind-create-cluster/
 
 #### Cluster Architecture
 
+**c1c2-singlenet** (single network, direct pod-to-pod routing)
 ```
 c1 (kind-c1)                        c2 (kind-c2)
 podSubnet: 172.18.10.0/24           podSubnet: 172.18.11.0/24
-Istio profile: default              Istio profile: default
 meshID: mesh1                       meshID: mesh1
 clusterName: cluster1               clusterName: cluster2
 network: network1                   network: network1
           ↕  cross-cluster remote secret (mesh.sh)
-          ↕  static pod-subnet routes (single network)
+          ↕  static pod-subnet routes → direct pod-to-pod
+```
+
+**c1c2-install-ewgw** (multi-network, traffic via east-west gateway)
+```
+c1 (kind-c1)                        c2 (kind-c2)
+podSubnet: 172.18.10.0/24           podSubnet: 172.18.11.0/24
+meshID: mesh1                       meshID: mesh1
+clusterName: cluster1               clusterName: cluster2
+network: network1                   network: network2
+          ↕  cross-cluster remote secret (mesh.sh)
+          ↕  cross-cluster traffic → east-west gateway:15443
 ```
 
 #### Verify Istio Mesh (c1/c2)
@@ -90,6 +101,47 @@ for i in $(seq 1 10); do
   kubectl --context kind-c2 exec -n istio-validation deploy/sleep -- curl -s helloworld.istio-validation.svc.cluster.local:5000/hello
 done
 ```
+
+#### Verify East-West Gateway — c1c2-install-ewgw only
+
+**1. Confirm Envoy routes c2 traffic through port 15443 (no installation required)**
+```bash
+kubectl --context kind-c1 exec -n istio-validation deploy/sleep -c istio-proxy -- \
+  curl -s localhost:15000/clusters | grep helloworld | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+' | sort -u
+```
+Expected: one entry at `<pod-ip>:5000` (c1 local) and one at `<ewgw-ip>:15443` (c2 via east-west gateway).
+
+**2. tcpdump — Method A: install on kind node**
+
+Terminal 1 (start capture on c2 node):
+```bash
+docker exec c2-control-plane bash -c "apt-get update -qq && apt-get install -y tcpdump -qq"
+docker exec -it c2-control-plane tcpdump -i any port 15443 -nn
+```
+
+Terminal 2 (generate traffic):
+```bash
+for i in $(seq 1 20); do
+  kubectl --context kind-c1 exec -n istio-validation deploy/sleep -- \
+    curl -s helloworld.istio-validation.svc.cluster.local:5000/hello
+done
+```
+
+**3. tcpdump — Method B: kubectl debug node (no installation required)**
+```bash
+kubectl --context kind-c2 debug node/c2-control-plane \
+  -it --image=nicolaka/netshoot \
+  -- tcpdump -i any port 15443 -nn
+```
+
+Expected tcpdump output:
+```
+IP 172.18.10.x.xxxxx > 172.18.0.x.15443: Flags [S]    ← SYN (c1 pod → c2 ewgw)
+IP 172.18.0.x.15443 > 172.18.10.x.xxxxx: Flags [S.]   ← SYN-ACK
+IP 172.18.10.x.xxxxx > 172.18.0.x.15443: Flags [.]    ← ACK (mTLS handshake)
+```
+
+> **Note**: run tcpdump on **c2 node**, not c1 — the destination of cross-cluster traffic is c2's east-west gateway.
 
 #### Frequently used commands
 ```

@@ -14,7 +14,7 @@
 
 ### Step 1：收集資訊
 詢問使用者：
-- **Issue 標題**（例如：`feat: add xxx`）
+- **Issue 標題**（例如：`feat: add xxx`，**標題一律使用英文**）
 - **Issue 描述**（問題背景、預計異動）
 - **Branch slug**（例如：`add-xxx`，會自動加上 issue 編號變成 `{number}-add-xxx`）
 - **目標 base branch**（預設 `1-feat-develop`）
@@ -67,6 +67,11 @@ git push origin {issue-number}-$SLUG
 git branch -d {issue-number}-$SLUG
 git push origin --delete {issue-number}-$SLUG
 ```
+
+## Issue 標題準則
+
+- **一律使用英文**撰寫 issue 標題
+- 格式：`<type>: <short description>`，例如 `feat: add xxx`、`fix: xxx not working`、`chore: update xxx`
 
 ## 注意事項
 
