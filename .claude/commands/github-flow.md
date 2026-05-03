@@ -61,6 +61,7 @@ git push origin {issue-number}-$SLUG
 - merge PR（`merge_method: merge`）
 - sync local base branch（`git pull origin $BASE_BRANCH`）
 - 自動刪除 feature branch（local + remote），無需詢問使用者
+- **絕對不可刪除** `1-feat-develop`、`main` 等長期 branch，只刪除格式為 `{issue-number}-$SLUG` 的 feature branch
 
 ```bash
 git branch -d {issue-number}-$SLUG
