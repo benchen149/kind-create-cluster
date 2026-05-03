@@ -14,7 +14,9 @@ main_task(){
     bash $abspath/scripts/deploy-nginx.sh
     # bash $abspath/scripts/istio_consistent_hash.sh
     bash $abspath/scripts/metallb.sh
-    # bash $abspath/scripts/mesh.sh
+    if [[ "$cluster_mode" == "multi" ]]; then
+        bash $abspath/scripts/mesh.sh
+    fi
 }
 
 clear(){

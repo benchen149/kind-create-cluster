@@ -17,16 +17,78 @@ kind-create-cluster/
 #### Getting Started
 
 1. **Update Configurations**  
-   Modify the configuration files to set the required versions for **Kind**, **Istio**, **Kiali**, and other related components.
+   Modify `config/config.env` to set the required versions for **Kind**, **Istio**, **Kiali**, and other components.
 
-2. **Review Execution Steps**  
-   Check the steps defined in `scripts/main.sh` to understand the execution flow.
+2. **Run via Makefile** (recommended)
 
-3. **Run the Script**  
-   Execute the following command to start:
+   | Command | Description |
+   |---|---|
+   | `make c1-sidecar` | Single cluster (c1) with sidecar mode Istio |
+   | `make c1c2-singlenet` | Dual clusters (c1 + c2) with sidecar mode Istio multi-primary mesh (single network) |
+   | `make clean` | Delete all kind clusters and clear download cache |
+
+3. **Or run the script directly**
    ```
+   # single cluster
+   ./scripts/main.sh
+
+   # dual cluster single network — set cluster_mode=multi in config/config.env first
    ./scripts/main.sh
    ```
+
+#### Cluster Architecture
+
+```
+c1 (kind-c1)                        c2 (kind-c2)
+podSubnet: 172.18.10.0/24           podSubnet: 172.18.11.0/24
+Istio profile: default              Istio profile: default
+meshID: mesh1                       meshID: mesh1
+clusterName: cluster1               clusterName: cluster2
+network: network1                   network: network1
+          ↕  cross-cluster remote secret (mesh.sh)
+          ↕  static pod-subnet routes (single network)
+```
+
+#### Verify Istio Mesh (c1/c2)
+
+**1. Check istiod status**
+```bash
+kubectl --context kind-c1 get pod -n istio-system -l app=istiod
+kubectl --context kind-c2 get pod -n istio-system -l app=istiod
+```
+
+**2. Check sidecar injection (pods should be 2/2)**
+```bash
+kubectl --context kind-c1 get pod -n sample
+kubectl --context kind-c2 get pod -n sample
+```
+
+**3. Check remote secrets (cross-cluster discovery)**
+```bash
+kubectl --context kind-c1 get secret -n istio-system istio-remote-secret-cluster2
+kubectl --context kind-c2 get secret -n istio-system istio-remote-secret-cluster1
+```
+
+**4. Verify shared root CA**
+```bash
+kubectl --context kind-c1 -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}' > /tmp/c1-root.pem
+kubectl --context kind-c2 -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}' > /tmp/c2-root.pem
+cmp /tmp/c1-root.pem /tmp/c2-root.pem && echo "OK: cacerts identical" || echo "FAIL: cacerts differ"
+```
+
+**5. Cross-cluster routing test (c1 → helloworld, expect v1/v2 alternating)**
+```bash
+for i in $(seq 1 10); do
+  kubectl --context kind-c1 exec -n sample deploy/sleep -- curl -s helloworld.sample.svc.cluster.local:5000/hello
+done
+```
+
+**6. Reverse test (c2 → helloworld)**
+```bash
+for i in $(seq 1 10); do
+  kubectl --context kind-c2 exec -n sample deploy/sleep -- curl -s helloworld.sample.svc.cluster.local:5000/hello
+done
+```
 
 #### Frequently used commands
 ```

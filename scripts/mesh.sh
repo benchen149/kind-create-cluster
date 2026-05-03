@@ -48,40 +48,18 @@ check_cacerts(){
     fi
 }
 
-appdend_ip_mac(){  
-    # get ns/sample pod's ip     
-    sleep_ip_c1=$(kubectl -n sample --context="${CTX_CLUSTER1}" get pod -l app=sleep -o jsonpath='{.items[0].status.podIP}')
-    helloworld_ip_c1=$(kubectl -n sample --context="${CTX_CLUSTER1}" get pod -l app=helloworld -o jsonpath='{.items[0].status.podIP}')
+add_cross_cluster_routes(){
+    c1_master_ip=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' c1-control-plane)
+    c2_master_ip=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' c2-control-plane)
 
-    sleep_ip_c2=$(kubectl -n sample --context="${CTX_CLUSTER2}" get pod -l app=sleep -o jsonpath='{.items[0].status.podIP}')
-    helloworld_ip_c2=$(kubectl -n sample --context="${CTX_CLUSTER2}" get pod -l app=helloworld -o jsonpath='{.items[0].status.podIP}')
+    c1_pod_subnet=$(kubectl --context="${CTX_CLUSTER1}" get node c1-control-plane -o jsonpath='{.spec.podCIDR}')
+    c2_pod_subnet=$(kubectl --context="${CTX_CLUSTER2}" get node c2-control-plane -o jsonpath='{.spec.podCIDR}')
 
-    echo "Sleep Pod IP in Cluster1: $sleep_ip_c1"
-    echo "Helloworld Pod IP in Cluster1: $helloworld_ip_c1"
-    echo "Sleep Pod IP in Cluster2: $sleep_ip_c2"
-    echo "Helloworld Pod IP in Cluster2: $helloworld_ip_c2"   
+    echo "Adding route: c1 → $c2_pod_subnet via $c2_master_ip"
+    docker exec c1-control-plane ip route add "$c2_pod_subnet" via "$c2_master_ip" 2>/dev/null || echo "route already exists"
 
-    docker exec -it c1-control-plane bash -c "
-    apt-get update && apt-get install -y net-tools && 
-    echo 'Installation completed on c1-control-plane'
-    " && \
-    docker exec -it c2-control-plane bash -c "
-        apt-get update && apt-get install -y net-tools && 
-        echo 'Installation completed on c2-control-plane'
-    "
-    # mac_address_c1=$(docker exec c1-control-plane bash -c "arp -n | grep '$c1_master_ip' | awk '{print \$3}'")
-    # mac_address_c2=$(docker exec c1-control-plane bash -c "arp -n | grep '$c1_master_ip' | awk '{print \$3}'")
-    
-    # echo mac_address_c1=$mac_address_c1
-    # echo mac_address_c2=$mac_address_c2
-    
-    # get control-plane1's mac
-
-    # get control-plane2's mac    
-
-    # append the helloworld's ip and mac address on control-plane node
-
-
+    echo "Adding route: c2 → $c1_pod_subnet via $c1_master_ip"
+    docker exec c2-control-plane ip route add "$c1_pod_subnet" via "$c1_master_ip" 2>/dev/null || echo "route already exists"
 }
 
 istiod_status=$(kubectl get pod -n istio-system -l app=istiod -o jsonpath='{.items[0].status.phase}')
@@ -91,7 +69,7 @@ namespace_exists=$(kubectl get ns sample --ignore-not-found)
 if [[ "$istiod_status" == "Running" ]]; then
     main_task
     check_cacerts
-    appdend_ip_mac
+    add_cross_cluster_routes
 fi
 
 exit 0
