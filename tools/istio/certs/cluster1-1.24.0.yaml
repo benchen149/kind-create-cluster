@@ -15,13 +15,6 @@ spec:
         hpaSpec:
           minReplicas: 1
           maxReplicas: 1
-        overlays:
-        - apiVersion: apps/v1
-          kind: Service
-          name: istio-ingressgateway
-          patches:
-            - path: spec.type
-              value: ClusterIP
     pilot:
       k8s:
         env:
