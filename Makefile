@@ -15,5 +15,6 @@ c1c2-singlenet:
 	bash scripts/main.sh
 
 clean:
-	bash scripts/create_cluster.sh delete_kind_cluster
+	kind delete cluster --name c1 2>/dev/null || true
+	kind delete cluster --name c2 2>/dev/null || true
 	rm -rf /tmp/download/*
