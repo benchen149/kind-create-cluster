@@ -30,7 +30,7 @@ istio(){
                 --from-file=cluster2/root-cert.pem \
                 --from-file=cluster2/cert-chain.pem
             echo $FILE_PATH_istio_2
-            envsubst '$istio_label' < $FILE_PATH_istio_2 | istioctl install --context="${CTX_CLUSTER2}" -y -f -
+            envsubst '$istio_label $NETWORK_CLUSTER2' < $FILE_PATH_istio_2 | istioctl install --context="${CTX_CLUSTER2}" -y -f -
             
         elif [[ "$cluster_mode" == "single" ]]; then
             # 單集群模式Istio

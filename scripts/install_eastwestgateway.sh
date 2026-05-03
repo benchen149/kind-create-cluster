@@ -22,6 +22,13 @@ label_cluster(){
 
 install_eastwestgateway(){
     export PATH=$FOLDER_PATH_istio/bin:$PATH
+    export NETWORK_CLUSTER2=network2
+
+    echo "Reconfiguring istiod on ${CTX_CLUSTER2} for network=${NETWORK_CLUSTER2} ..."
+    envsubst '$istio_label $NETWORK_CLUSTER2' < $FILE_PATH_istio_2 \
+        | istioctl install --context="${CTX_CLUSTER2}" -y -f -
+    kubectl --context="${CTX_CLUSTER2}" -n istio-system \
+        rollout status deployment/istiod-${istio_label} --timeout=120s
 
     label_cluster "${CTX_CLUSTER1}" "${NETWORK_CLUSTER1}"
     label_cluster "${CTX_CLUSTER2}" "${NETWORK_CLUSTER2}"
