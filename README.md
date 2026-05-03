@@ -17,16 +17,79 @@ kind-create-cluster/
 #### Getting Started
 
 1. **Update Configurations**  
-   Modify the configuration files to set the required versions for **Kind**, **Istio**, **Kiali**, and other related components.
+   Modify `config/config.env` to set the required versions for **Kind**, **Istio**, **Kiali**, and other components.
 
-2. **Review Execution Steps**  
-   Check the steps defined in `scripts/main.sh` to understand the execution flow.
+2. **Run via Makefile** (recommended)
 
-3. **Run the Script**  
-   Execute the following command to start:
+   | Command | Description |
+   |---|---|
+   | `make c1-sidecar` | Single cluster (c1) with sidecar mode Istio |
+   | `make c1c2-singlenet` | Dual clusters (c1 + c2) with sidecar mode Istio multi-primary mesh (single network) |
+   | `make c1c2-install-ewgw` | Build dual clusters and install istio-eastwestgateway (includes c1c2-singlenet) |
+   | `make clean` | Delete all kind clusters and clear download cache |
+
+3. **Or run the script directly**
    ```
+   # single cluster
+   ./scripts/main.sh
+
+   # dual cluster single network — set cluster_mode=multi in config/config.env first
    ./scripts/main.sh
    ```
+
+#### Cluster Architecture
+
+```
+c1 (kind-c1)                        c2 (kind-c2)
+podSubnet: 172.18.10.0/24           podSubnet: 172.18.11.0/24
+Istio profile: default              Istio profile: default
+meshID: mesh1                       meshID: mesh1
+clusterName: cluster1               clusterName: cluster2
+network: network1                   network: network1
+          ↕  cross-cluster remote secret (mesh.sh)
+          ↕  static pod-subnet routes (single network)
+```
+
+#### Verify Istio Mesh (c1/c2)
+
+**1. Check istiod status**
+```bash
+kubectl --context kind-c1 get pod -n istio-system -l app=istiod
+kubectl --context kind-c2 get pod -n istio-system -l app=istiod
+```
+
+**2. Check sidecar injection (pods should be 2/2)**
+```bash
+kubectl --context kind-c1 get pod -n istio-validation
+kubectl --context kind-c2 get pod -n istio-validation
+```
+
+**3. Check remote secrets (cross-cluster discovery)**
+```bash
+kubectl --context kind-c1 get secret -n istio-system istio-remote-secret-cluster2
+kubectl --context kind-c2 get secret -n istio-system istio-remote-secret-cluster1
+```
+
+**4. Verify shared root CA**
+```bash
+kubectl --context kind-c1 -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}' > /tmp/c1-root.pem
+kubectl --context kind-c2 -n istio-system get secret cacerts -ojsonpath='{.data.root-cert\.pem}' > /tmp/c2-root.pem
+cmp /tmp/c1-root.pem /tmp/c2-root.pem && echo "OK: cacerts identical" || echo "FAIL: cacerts differ"
+```
+
+**5. Cross-cluster routing test (c1 → helloworld, expect v1/v2 alternating)**
+```bash
+for i in $(seq 1 10); do
+  kubectl --context kind-c1 exec -n istio-validation deploy/sleep -- curl -s helloworld.istio-validation.svc.cluster.local:5000/hello
+done
+```
+
+**6. Reverse test (c2 → helloworld)**
+```bash
+for i in $(seq 1 10); do
+  kubectl --context kind-c2 exec -n istio-validation deploy/sleep -- curl -s helloworld.istio-validation.svc.cluster.local:5000/hello
+done
+```
 
 #### Frequently used commands
 ```
@@ -81,8 +144,8 @@ k1 get namespace istio-system -o json | jq '.spec.finalizers=[]' | k1 replace --
 
 #### test/istio consistent hash
 ```
-k1 -n sample exec -it helloworld-v1-77cb56d4b4-svsnl -- curl -s helloworld.sample3.svc.cluster.local:5000/hello
-k1 -n sample exec -it helloworld-v1-77cb56d4b4-svsnl -- curl -s -H "X-User: abc" helloworld.sample3.svc.cluster.local:5000/hello
+k1 -n istio-validation exec -it helloworld-v1-77cb56d4b4-svsnl -- curl -s helloworld.sample3.svc.cluster.local:5000/hello
+k1 -n istio-validation exec -it helloworld-v1-77cb56d4b4-svsnl -- curl -s -H "X-User: abc" helloworld.sample3.svc.cluster.local:5000/hello
 ```
 
 #### metallb 
@@ -111,26 +174,26 @@ source ~/.bashrc
 #### switch mode (sidecar/ambient)
 開啟 ambient mode (namespace level)
 ```
-k1 label ns sample istio.io/dataplane-mode=ambient
-k1 label ns sample istio.io/use-waypoint=waypoint
-k1 -n sample apply -f waypoint-gateway.yaml
+k1 label ns istio-validation istio.io/dataplane-mode=ambient
+k1 label ns istio-validation istio.io/use-waypoint=waypoint
+k1 -n istio-validation apply -f waypoint-gateway.yaml
 ```
 關閉 ambient mode (namespace level)
 ```
-k1 label ns sample istio.io/dataplane-mode-
-k1 label ns sample istio.io/use-waypoint-
-k1 -n sample delete -f waypoint-gateway.yaml
-k1 -n sample delete po --all
+k1 label ns istio-validation istio.io/dataplane-mode-
+k1 label ns istio-validation istio.io/use-waypoint-
+k1 -n istio-validation delete -f waypoint-gateway.yaml
+k1 -n istio-validation delete po --all
 ```
 開啟 sidecar mode (namespace level)
 ```
-k1 label ns sample istio.io/rev=1-24-0
-k1 -n sample delete po --all
+k1 label ns istio-validation istio.io/rev=1-24-0
+k1 -n istio-validation delete po --all
 ```
 關閉 sidecar mode (namespace level)
 ```
-k1 label ns sample istio.io/rev-
-k1 -n sample delete po --all
+k1 label ns istio-validation istio.io/rev-
+k1 -n istio-validation delete po --all
 ```
 
 #### Show Git branch
@@ -160,10 +223,10 @@ ls -l tls.crt tls.key
 
 openssl x509 -in tls.crt -text -noout
 
-kubectl -n test create secret tls ngx-service-tls \
+kubectl -n istio-validation create secret tls ngx-service-tls \
   --cert=tls.crt \
   --key=tls.key \
-  -n test 
+  -n istio-validation 
 ```
 
 #### others
