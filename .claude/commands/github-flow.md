@@ -60,11 +60,16 @@ git push origin {issue-number}-$SLUG
 詢問使用者是否直接 merge，若是則：
 - merge PR（`merge_method: merge`）
 - sync local base branch（`git pull origin $BASE_BRANCH`）
-- 詢問是否刪除 feature branch（local + remote）
+- 自動刪除 feature branch（local + remote），無需詢問使用者
+
+```bash
+git branch -d {issue-number}-$SLUG
+git push origin --delete {issue-number}-$SLUG
+```
 
 ## 注意事項
 
 - `GITHUB_TOKEN` 需要有 Contents / Issues / Pull requests 的 Read and write 權限
 - 若環境沒有 `GITHUB_TOKEN`，流程開始前會提示設定
 - base branch 預設為 `1-feat-develop`，若要 merge 到 `main` 請在 Step 1 指定
-- feature branch merge 後是否刪除由使用者決定，`1-feat-develop` 等長期 branch 不刪除
+- `1-feat-develop`、`main` 等長期 branch 不在自動刪除範圍內
