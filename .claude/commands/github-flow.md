@@ -30,7 +30,9 @@ curl -s -X POST \
   -d "{\"title\": \"$TITLE\", \"body\": \"$BODY\"}"
 ```
 
-### Step 3：建立並切換 branch
+### Step 3：建立並切換 branch（自動執行，不需使用者確認）
+取得 issue 編號後立即執行，無需等待使用者確認。
+
 ```bash
 git checkout $BASE_BRANCH
 git pull origin $BASE_BRANCH
@@ -38,7 +40,7 @@ git checkout -b {issue-number}-$SLUG
 ```
 
 ### Step 4：等待使用者完成改動
-提示使用者進行程式碼修改，完成後告知 Claude 繼續。
+branch 建立完成後，提示使用者目前所在 branch 及需要修改的檔案，等待使用者完成程式碼修改後告知 Claude 繼續。
 
 ### Step 5：Commit & Push
 ```bash
