@@ -37,6 +37,25 @@ kind-create-cluster/
    ./scripts/main.sh
    ```
 
+#### Claude Commands — Development Workflow
+
+此專案提供 Claude Code slash commands，讓任何新的開發環境都能快速完成環境設定並遵循統一的開發流程。
+
+| Command | 說明 |
+|---|---|
+| `/setup-github-ssh` | 新環境一次性設定：SSH key 產生、GitHub 綁定、gh CLI 登入（含安全規範） |
+| `/github-flow` | 完整開發流程：issue → branch → commit → PR → merge |
+
+**建議順序（新環境第一次）：**
+```
+1. /setup-github-ssh   # 完成 SSH + gh CLI 認證設定
+2. /github-flow        # 開始功能開發
+```
+
+詳細步驟請參考 `.claude/commands/` 目錄下的對應 `.md` 檔案。
+
+---
+
 #### Cluster Architecture
 
 **c1c2-singlenet** (single network, direct pod-to-pod routing)
