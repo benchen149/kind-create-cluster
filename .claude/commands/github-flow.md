@@ -1,6 +1,6 @@
 # GitHub Flow 自動化
 
-執行完整的 GitHub issue → branch → PR → merge 工作流程。
+執行完整的 GitHub issue → branch → PR → merge 工作流程，或關閉指定的 PR / Issue。
 
 ## 使用方式
 
@@ -8,9 +8,11 @@
 /github-flow
 ```
 
-執行後會依序引導你完成以下步驟。
+執行後會詢問要執行哪個模式。
 
-## 執行流程
+---
+
+## 模式一：完整開發流程（issue → branch → PR → merge）
 
 ### Step 1：收集資訊
 詢問使用者：
@@ -23,11 +25,9 @@
 使用 GitHub API 建立 issue，取得 issue 編號。
 
 ```bash
-curl -s -X POST \
-  -H "Authorization: Bearer $GITHUB_TOKEN" \
-  -H "Accept: application/vnd.github+json" \
-  https://api.github.com/repos/benchen149/kind-create-cluster/issues \
-  -d "{\"title\": \"$TITLE\", \"body\": \"$BODY\"}"
+gh issue create --repo benchen149/kind-create-cluster \
+  --title "$TITLE" \
+  --body "$BODY"
 ```
 
 ### Step 3：建立並切換 branch（自動執行，不需使用者確認）
@@ -54,7 +54,16 @@ git push origin {issue-number}-$SLUG
 ```
 
 ### Step 6：開 Pull Request
-使用 GitHub API 建立 PR，base 指向 `$BASE_BRANCH`。
+使用 gh CLI 建立 PR，base 指向 `$BASE_BRANCH`。
+
+```bash
+gh pr create \
+  --repo benchen149/kind-create-cluster \
+  --base $BASE_BRANCH \
+  --head {issue-number}-$SLUG \
+  --title "$TITLE" \
+  --body "$BODY"
+```
 
 ### Step 7：確認是否 merge
 詢問使用者是否直接 merge，若是則：
@@ -64,18 +73,55 @@ git push origin {issue-number}-$SLUG
 - **絕對不可刪除** `1-feat-develop`、`main` 等長期 branch，只刪除格式為 `{issue-number}-$SLUG` 的 feature branch
 
 ```bash
+gh pr merge {pr-number} --repo benchen149/kind-create-cluster --merge --delete-branch
+git checkout $BASE_BRANCH
+git pull origin $BASE_BRANCH
 git branch -d {issue-number}-$SLUG
-git push origin --delete {issue-number}-$SLUG
 ```
+
+### Step 8：sync to main（選用）
+若 base branch 不是 `main`，詢問是否開一個 sync PR 將變更合併進 `main`。
+
+開 sync PR 時**必須**在 body 帶入本次相關的 `Closes #X`，讓 GitHub 在 merge 進 main 時自動關閉 issue：
+
+```bash
+gh pr create \
+  --repo benchen149/kind-create-cluster \
+  --base main \
+  --head $BASE_BRANCH \
+  --title "chore: sync $BASE_BRANCH changes to main" \
+  --body "Closes #{issue-number}"
+```
+
+> **原因**：GitHub 的 `Closes #X` 只在 PR merge 進 default branch（`main`）時觸發，feature branch → `1-feat-develop` 不會自動關閉 issue。
+
+---
 
 ## Issue 標題準則
 
 - **一律使用英文**撰寫 issue 標題
 - 格式：`<type>: <short description>`，例如 `feat: add xxx`、`fix: xxx not working`、`chore: update xxx`
 
+---
+
+## 模式二：關閉 PR / Issue
+
+詢問使用者要關閉的類型（PR 或 Issue）與編號，支援一次關閉多個。
+
+### 關閉 Issue
+```bash
+gh issue close {number} --repo benchen149/kind-create-cluster
+```
+
+### 關閉 PR
+```bash
+gh pr close {number} --repo benchen149/kind-create-cluster
+```
+
+---
+
 ## 注意事項
 
-- `GITHUB_TOKEN` 需要有 Contents / Issues / Pull requests 的 Read and write 權限
-- 若環境沒有 `GITHUB_TOKEN`，流程開始前會提示設定
+- `gh` CLI 需已完成登入（執行 `/setup-github-ssh` 完成初始設定）
 - base branch 預設為 `1-feat-develop`，若要 merge 到 `main` 請在 Step 1 指定
 - `1-feat-develop`、`main` 等長期 branch 不在自動刪除範圍內
