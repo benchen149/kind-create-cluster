@@ -56,6 +56,7 @@ get_node_image(){
         v0.14.0) echo "kindest/node:v1.24.0" ;;
         v0.23.0) echo "kindest/node:v1.27.3" ;;
         v0.26.0) echo "kindest/node:v1.29.2" ;;
+        v0.30.0) echo "kindest/node:v1.34.0" ;;
         *) echo "" ;;
     esac
 }
