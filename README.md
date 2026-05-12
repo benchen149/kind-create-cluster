@@ -19,6 +19,14 @@ kind-create-cluster/
 1. **Update Configurations**  
    Modify `config/config.env` to set the required versions for **Kind**, **Istio**, **Kiali**, and other components.
 
+   Current recommended versions:
+
+   | Component | Version | Kubernetes |
+   |---|---|---|
+   | kind | v0.30.0 | v1.34.0 |
+   | Istio | 1.29.2 | 1.31 – 1.35 |
+   | Kiali | v1.49.0 | — |
+
 2. **Run via Makefile** (recommended)
 
    | Command | Description |
@@ -251,10 +259,9 @@ kubectl --context kind-c2 rollout restart deployment/istio-eastwestgateway -n is
 ```
 # kind version is defined in config/config.env (kind_version)
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/${kind_version}/kind-linux-amd64
-wget "https://github.com/istio/istio/releases/download/1.25.5/istio-1.25.5-linux-amd64.tar.gz" -O - | tar -xz 
-cp tools/istio/certs/cluster1-1.24.0.yaml  .
-mv cluster1-1.24.0.yaml cluster-1.24.0.yaml
-istioctl install -y -f cluster-1.24.0.yaml
+wget "https://github.com/istio/istio/releases/download/1.29.2/istio-1.29.2-linux-amd64.tar.gz" -O - | tar -xz 
+cp tools/istio/certs/cluster1.yaml  .
+istioctl install -y -f cluster1.yaml
 
 ```
 
