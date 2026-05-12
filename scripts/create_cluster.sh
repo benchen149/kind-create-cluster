@@ -47,7 +47,7 @@ delete_kind_cluster(){
             done
             fi
         fi
-    sudo rm -rf /home/ben/.kind/etcd-c1 && mkdir -p /home/ben/.kind/etcd-c1
+    sudo rm -rf "$HOME/.kind/etcd-c1" && mkdir -p "$HOME/.kind/etcd-c1"
     echo "end delete_kind_cluster() .."
 }
 
@@ -67,10 +67,10 @@ build_kind_config(){
     cp "$base_config" "$tmp_config"
     # extraMounts on /var/lib/etcd only works on kind v0.26.0+
     if [[ "$kind_version" == "v0.26.0" ]]; then
-        mkdir -p /home/ben/.kind/etcd-c1
-        cat >> "$tmp_config" << 'EOF'
+        mkdir -p "$HOME/.kind/etcd-c1"
+        cat >> "$tmp_config" << EOF
     extraMounts:
-      - hostPath: /home/ben/.kind/etcd-c1
+      - hostPath: $HOME/.kind/etcd-c1
         containerPath: /var/lib/etcd
 EOF
     fi
