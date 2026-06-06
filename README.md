@@ -179,7 +179,7 @@ See [issue #30](https://github.com/benchen149/kind-create-cluster/issues/30) for
 # kind version is defined in config/config.env (kind_version)
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/${kind_version}/kind-linux-amd64
 wget "https://github.com/istio/istio/releases/download/1.29.2/istio-1.29.2-linux-amd64.tar.gz" -O - | tar -xz 
-cp tools/istio/certs/cluster1.yaml  .
+cp tools/istio/operator/cluster1.yaml  .
 istioctl install -y -f cluster1.yaml
 
 ```
@@ -293,22 +293,14 @@ function git_branch {
 export PS1='\u@\h \[\033[01;36m\]\W\[\033[01;32m\]$(git_branch)\[\033[00m\] \$ '
 ```
 
-#### 產生tls secret
+#### 產生 tls secret(私鑰不入 repo,動態產生)
+demo 憑證改由腳本動態產生,私鑰不再保存於 repo:
 ```
-openssl req -x509 -nodes -days 365 \
-  -newkey rsa:2048 \
-  -keyout tls.key \
-  -out tls.crt \
-  -subj "/CN=ngx-service.app.c3.dev.com/O=MyOrganization
+# 一鍵產生自簽憑證並建立 secret
+# 預設 host=ngx-service.app.c3.dev.com, namespace=test, secret=ngx-service-tls
+bash samples/ingress/gen-tls.sh
 
-ls -l tls.crt tls.key
-
-openssl x509 -in tls.crt -text -noout
-
-kubectl -n istio-validation create secret tls ngx-service-tls \
-  --cert=tls.crt \
-  --key=tls.key \
-  -n istio-validation 
+# 自訂參數: bash samples/ingress/gen-tls.sh <host> <namespace> <secret-name>
 ```
 
 #### others

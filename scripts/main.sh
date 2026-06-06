@@ -19,15 +19,8 @@ main_task(){
     fi
 }
 
-clear(){
-    echo "start clear() .."
-    rm -rf $FOLDER_PATH_download/*    
-    echo "end clear() .."
-}
-
-if [[ -n "$istio_version" && -n "$kiali_version" ]]; then    
+if [[ -n "$istio_version" && -n "$kiali_version" ]]; then
     main_task
-    clear
 else
     echo "Error: istio_version and kiali_version must be set."
 fi
