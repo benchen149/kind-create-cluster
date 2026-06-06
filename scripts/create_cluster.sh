@@ -26,9 +26,17 @@ pretask(){
     # download kind
     if [ "$filter_kind_version" != "$kind_version" ]; then
         echo "start kind download"
-        [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/$kind_version/kind-linux-amd64    
+        [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/$kind_version/kind-linux-amd64
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin/kind
+    fi
+
+    # download kubectl
+    if [ "$filter_kubectl_version" != "$kubectl_version" ]; then
+        echo "start kubectl download"
+        [ $(uname -m) = x86_64 ] && curl -Lo ./kubectl "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl"
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
     fi
     echo "end pretask() .."
 }
