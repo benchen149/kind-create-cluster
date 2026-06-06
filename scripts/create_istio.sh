@@ -4,16 +4,41 @@ set -e
 abspath=$(cd "$(dirname "$0")/.."; pwd)
 source $abspath/config/config.env
 
+# 使用 Istio 發行包內建的 Makefile.selfsigned.mk 動態產生 cacerts（共用同一 root CA）
+# 用法：gen_cacerts cluster1 [cluster2 ...]，已存在則快取重用
+gen_cacerts(){
+    local CERT_MAKEFILE="$FOLDER_PATH_istio/tools/certs/Makefile.selfsigned.mk"
+    if [[ ! -f "$CERT_MAKEFILE" ]]; then
+        echo "Error: cert Makefile 不存在: $CERT_MAKEFILE（請先執行 pretask 下載 Istio）"
+        exit 1
+    fi
+    mkdir -p "$FOLDER_PATH_cacerts"
+    (
+        cd "$FOLDER_PATH_cacerts"
+        local c
+        for c in "$@"; do
+            if [[ -f "$c/cert-chain.pem" ]]; then
+                echo "cacerts for $c 已存在，快取重用。"
+            else
+                echo "產生 cacerts for $c .."
+                make -f "$CERT_MAKEFILE" root-ca
+                make -f "$CERT_MAKEFILE" "$c-cacerts"
+            fi
+        done
+    )
+}
+
 istio(){
-    echo "start istio() .." 
+    echo "start istio() .."
     if [[ -f "$FILE_PATH_istio" && -f "$FILE_PATH_istio_2" ]]; then
         echo "文件" $FILE_PATH_istio "and" $FILE_PATH_istio_2 "存在..."
         cd $FOLDER_PATH_download/istio-$istio_version
         export PATH=$FOLDER_PATH_download/istio-$istio_version/bin:$PATH
-        pushd $FOLDER_PATH_certs
 
-        if [[ "$cluster_mode" == "multi" ]]; then   
+        if [[ "$cluster_mode" == "multi" ]]; then
             # 創建多集群模式下Istio
+            gen_cacerts cluster1 cluster2
+            pushd $FOLDER_PATH_cacerts
             kubectl --context=$CTX_CLUSTER1 create namespace istio-system
             kubectl --context=$CTX_CLUSTER1 create secret generic cacerts -n istio-system \
                 --from-file=cluster1/ca-cert.pem \
@@ -35,6 +60,8 @@ istio(){
         elif [[ "$cluster_mode" == "single" ]]; then
             # 單集群模式Istio
             export CTX_CLUSTER1=kind-c1
+            gen_cacerts cluster1
+            pushd $FOLDER_PATH_cacerts
             kubectl --context=$CTX_CLUSTER1 create namespace istio-system
             kubectl --context=$CTX_CLUSTER1 create secret generic cacerts -n istio-system \
                 --from-file=cluster1/ca-cert.pem \
