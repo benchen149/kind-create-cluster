@@ -260,7 +260,7 @@ kubectl --context kind-c2 rollout restart deployment/istio-eastwestgateway -n is
 # kind version is defined in config/config.env (kind_version)
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/${kind_version}/kind-linux-amd64
 wget "https://github.com/istio/istio/releases/download/1.29.2/istio-1.29.2-linux-amd64.tar.gz" -O - | tar -xz 
-cp tools/istio/certs/cluster1.yaml  .
+cp tools/istio/operator/cluster1.yaml  .
 istioctl install -y -f cluster1.yaml
 
 ```
