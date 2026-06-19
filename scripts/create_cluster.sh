@@ -60,6 +60,14 @@ delete_kind_cluster(){
 }
 
 get_node_image(){
+    # 若 config.env 明確指定 node_image，優先使用（k8s 版本與 kind binary 解耦）。
+    # 同一個 kind binary 可支援多個 node image，例如 kind v0.30.0 支援
+    # v1.34.0 / v1.33.4 / v1.32.8 / v1.31.12。
+    if [[ -n "$node_image" ]]; then
+        echo "$node_image"
+        return
+    fi
+    # 未指定時 fall back 回 kind_version 對應的預設 node image。
     case "$kind_version" in
         v0.14.0) echo "kindest/node:v1.24.0" ;;
         v0.23.0) echo "kindest/node:v1.27.3" ;;
@@ -88,9 +96,9 @@ EOF
 
 create_kind_cluster(){
     echo "start create_kind_cluster() .."
-    local node_image=$(get_node_image)
+    local resolved_image=$(get_node_image)
     local image_flag=""
-    [[ -n "$node_image" ]] && image_flag="--image=$node_image"
+    [[ -n "$resolved_image" ]] && image_flag="--image=$resolved_image"
 
     if [[ "$cluster_mode" == "multi" ]]; then
         echo "創建集群 c1 和 c2"

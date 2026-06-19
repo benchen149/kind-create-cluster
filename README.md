@@ -27,6 +27,23 @@ kind-create-cluster/
    | Istio | 1.29.2 | 1.31 – 1.35 |
    | Kiali | v1.49.0 | — |
 
+   **Version matrix — Istio ↔ Kubernetes ↔ node image**
+
+   `kind_version` only selects the kind **binary**; the cluster Kubernetes version is
+   chosen independently via `node_image` in `config/config.env` (leave empty to fall
+   back to the `kind_version` default image). The `node_image` must be one that the
+   installed kind binary supports — kind v0.30.0 ships `v1.34.0` / `v1.33.4` /
+   `v1.32.8` / `v1.31.12`. Pick a Kubernetes version inside the target Istio's
+   [supported range](https://istio.io/latest/docs/releases/supported-releases/):
+
+   | Istio | Supported K8s | Recommended `node_image` (kind v0.30.0) |
+   |---|---|---|
+   | 1.29.2 | 1.31 – 1.35 | `kindest/node:v1.34.0` |
+   | 1.24.0 | 1.28 – 1.31 | `kindest/node:v1.31.12` |
+
+   > Also align `kubectl_version` with the chosen Kubernetes version (version skew
+   > generally tolerates ±1 minor).
+
 2. **Run via Makefile** (recommended)
 
    | Command | Description |
