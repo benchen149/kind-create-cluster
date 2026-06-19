@@ -38,6 +38,9 @@ spec:
     global:
       variant: debug
       meshID: mesh1
+      # cluster 差異參數化：由安裝腳本 envsubst 帶入每個 cluster 的值
+      #   c1（multi / single 共用）：CLUSTER_NAME=cluster1 NETWORK_NAME=$NETWORK_CLUSTER1
+      #   c2                        ：CLUSTER_NAME=cluster2 NETWORK_NAME=$NETWORK_CLUSTER2
       multiCluster:
-        clusterName: cluster1
-      network: network1
+        clusterName: ${CLUSTER_NAME}
+      network: ${NETWORK_NAME}

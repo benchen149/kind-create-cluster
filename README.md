@@ -27,22 +27,38 @@ kind-create-cluster/
    | Istio | 1.29.2 | 1.31 – 1.35 |
    | Kiali | v1.49.0 | — |
 
-   **Version matrix — Istio ↔ Kubernetes ↔ node image**
+   **Version matrix — how `kind_version` / `node_image` / `istio_version` / `kubectl_version` fit together**
 
-   `kind_version` only selects the kind **binary**; the cluster Kubernetes version is
-   chosen independently via `node_image` in `config/config.env` (leave empty to fall
-   back to the `kind_version` default image). The `node_image` must be one that the
-   installed kind binary supports — kind v0.30.0 ships `v1.34.0` / `v1.33.4` /
-   `v1.32.8` / `v1.31.12`. Pick a Kubernetes version inside the target Istio's
-   [supported range](https://istio.io/latest/docs/releases/supported-releases/):
+   The four version knobs in `config/config.env` are independent but constrained by each
+   other. The rules:
 
-   | Istio | Supported K8s | Recommended `node_image` (kind v0.30.0) |
-   |---|---|---|
-   | 1.29.2 | 1.31 – 1.35 | `kindest/node:v1.34.0` |
-   | 1.24.0 | 1.28 – 1.31 | `kindest/node:v1.31.12` |
+   - `kind_version` selects only the kind **binary**; it does *not* fix the cluster
+     Kubernetes version.
+   - `node_image` fixes the cluster Kubernetes version. It must be an image the installed
+     kind binary supports — kind v0.30.0 ships `v1.34.0` / `v1.33.4` / `v1.32.8` /
+     `v1.31.12`. Leave it empty to fall back to the kind binary's default (see fall-back
+     table below).
+   - `node_image`'s Kubernetes version must sit inside the target Istio's
+     [supported range](https://istio.io/latest/docs/releases/supported-releases/).
+   - `istio_label` **must equal** `istio_version` (dots → dashes, e.g. `1.29.2` →
+     `1-29-2`); always change the two together.
+   - `kubectl_version` should track `node_image`'s Kubernetes minor (skew tolerates ±1).
 
-   > Also align `kubectl_version` with the chosen Kubernetes version (version skew
-   > generally tolerates ±1 minor).
+   Vetted combinations (all on kind v0.30.0):
+
+   | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
+   |---|---|---|---|---|---|
+   | v0.30.0 | 1.29.2 | 1-29-2 | `kindest/node:v1.34.0` | 1.31 – 1.35 | v1.34.8 |
+   | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.x |
+
+   Fall-back default `node_image` when `node_image` is left empty (`scripts/create_cluster.sh`):
+
+   | kind_version | default node_image |
+   |---|---|
+   | v0.30.0 | `kindest/node:v1.34.0` |
+   | v0.26.0 | `kindest/node:v1.29.2` |
+   | v0.23.0 | `kindest/node:v1.27.3` |
+   | v0.14.0 | `kindest/node:v1.24.0` |
 
 2. **Run via Makefile** (recommended)
 
@@ -132,14 +148,23 @@ kubectl --context kind-c2 -n istio-system get secret cacerts -ojsonpath='{.data.
 cmp /tmp/c1-root.pem /tmp/c2-root.pem && echo "OK: cacerts identical" || echo "FAIL: cacerts differ"
 ```
 
-**5. Cross-cluster routing test (c1 → helloworld, expect v1/v2 alternating)**
+**5. Verify cross-cluster traffic (c1 → helloworld, expect v1/v2 alternating)**
+
+依 Istio 官方 [Verifying Cross-Cluster Traffic](https://istio.io/latest/docs/setup/install/multicluster/verify/)：從 `sleep` pod 重複呼叫 `helloworld:5000/hello`，請求會被負載平衡到 **兩個 cluster** 的 `helloworld` 實例，回應的 `version` 應在 `v1`（c1）與 `v2`（c2）之間交替。
+
 ```bash
 for i in $(seq 1 10); do
   kubectl --context kind-c1 exec -n istio-validation deploy/sleep -- curl -s helloworld.istio-validation.svc.cluster.local:5000/hello
 done
 ```
+Expected（v1 / v2 交替出現，instance 為各 cluster 的 pod 名）：
+```
+Hello version: v1, instance: helloworld-v1-xxxxxxxxxx-xxxxx
+Hello version: v2, instance: helloworld-v2-xxxxxxxxxx-xxxxx
+...
+```
 
-**6. Reverse test (c2 → helloworld)**
+**6. Reverse test (c2 → helloworld, expect v1/v2 alternating)**
 ```bash
 for i in $(seq 1 10); do
   kubectl --context kind-c2 exec -n istio-validation deploy/sleep -- curl -s helloworld.istio-validation.svc.cluster.local:5000/hello
@@ -196,8 +221,10 @@ See [issue #30](https://github.com/benchen149/kind-create-cluster/issues/30) for
 # kind version is defined in config/config.env (kind_version)
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/${kind_version}/kind-linux-amd64
 wget "https://github.com/istio/istio/releases/download/1.29.2/istio-1.29.2-linux-amd64.tar.gz" -O - | tar -xz 
-cp tools/istio/operator/cluster1.yaml  .
-istioctl install -y -f cluster1.yaml
+cp tools/istio/operator/cluster.yaml  .
+# 統一檔需帶入 cluster 差異參數再 envsubst（c1 範例：cluster1 / network1）
+istio_label=1-29-2 CLUSTER_NAME=cluster1 NETWORK_NAME=network1 \
+  envsubst '$istio_label $CLUSTER_NAME $NETWORK_NAME' < cluster.yaml | istioctl install -y -f -
 
 ```
 
