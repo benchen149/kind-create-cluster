@@ -30,8 +30,8 @@ gen_cacerts(){
 
 istio(){
     echo "start istio() .."
-    if [[ -f "$FILE_PATH_istio" && -f "$FILE_PATH_istio_2" ]]; then
-        echo "文件" $FILE_PATH_istio "and" $FILE_PATH_istio_2 "存在..."
+    if [[ -f "$FILE_PATH_istio" ]]; then
+        echo "文件" $FILE_PATH_istio "存在..."
         cd $FOLDER_PATH_download/istio-$istio_version
         export PATH=$FOLDER_PATH_download/istio-$istio_version/bin:$PATH
 
@@ -45,8 +45,10 @@ istio(){
                 --from-file=cluster1/ca-key.pem \
                 --from-file=cluster1/root-cert.pem \
                 --from-file=cluster1/cert-chain.pem
-            echo $FILE_PATH_istio
-            envsubst '$istio_label' < $FILE_PATH_istio | istioctl install --context="${CTX_CLUSTER1}" -y -f -
+            echo $FILE_PATH_istio "(cluster1 / $NETWORK_CLUSTER1)"
+            CLUSTER_NAME=cluster1 NETWORK_NAME=$NETWORK_CLUSTER1 \
+                envsubst '$istio_label $CLUSTER_NAME $NETWORK_NAME' < $FILE_PATH_istio \
+                | istioctl install --context="${CTX_CLUSTER1}" -y -f -
 
             kubectl --context=$CTX_CLUSTER2 create namespace istio-system
             kubectl --context=$CTX_CLUSTER2 create secret generic cacerts -n istio-system \
@@ -54,9 +56,11 @@ istio(){
                 --from-file=cluster2/ca-key.pem \
                 --from-file=cluster2/root-cert.pem \
                 --from-file=cluster2/cert-chain.pem
-            echo $FILE_PATH_istio_2
-            envsubst '$istio_label $NETWORK_CLUSTER2' < $FILE_PATH_istio_2 | istioctl install --context="${CTX_CLUSTER2}" -y -f -
-            
+            echo $FILE_PATH_istio "(cluster2 / $NETWORK_CLUSTER2)"
+            CLUSTER_NAME=cluster2 NETWORK_NAME=$NETWORK_CLUSTER2 \
+                envsubst '$istio_label $CLUSTER_NAME $NETWORK_NAME' < $FILE_PATH_istio \
+                | istioctl install --context="${CTX_CLUSTER2}" -y -f -
+
         elif [[ "$cluster_mode" == "single" ]]; then
             # 單集群模式Istio
             export CTX_CLUSTER1=kind-c1
@@ -68,14 +72,16 @@ istio(){
                 --from-file=cluster1/ca-key.pem \
                 --from-file=cluster1/root-cert.pem \
                 --from-file=cluster1/cert-chain.pem
-            echo $FILE_PATH_istio
-            envsubst '$istio_label' < $FILE_PATH_istio | istioctl install --context="${CTX_CLUSTER1}" -y -f -
+            echo $FILE_PATH_istio "(cluster1 / $NETWORK_CLUSTER1)"
+            CLUSTER_NAME=cluster1 NETWORK_NAME=$NETWORK_CLUSTER1 \
+                envsubst '$istio_label $CLUSTER_NAME $NETWORK_NAME' < $FILE_PATH_istio \
+                | istioctl install --context="${CTX_CLUSTER1}" -y -f -
         else
             echo "please check agin : $cluster_mode 。"
             exit 1
         fi
     else
-      echo "文件 $FILE_PATH_istio or $FILE_PATH_istio_2 不存在，终止。"
+      echo "文件 $FILE_PATH_istio 不存在，终止。"
       exit 1
     fi
 }
