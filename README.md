@@ -24,7 +24,7 @@ kind-create-cluster/
    | Component | Version | Kubernetes |
    |---|---|---|
    | kind | v0.30.0 | v1.34.0 |
-   | Istio | 1.29.2 | 1.31 – 1.35 |
+   | Istio | 1.29.4 | 1.31 – 1.35 |
    | Kiali | v1.49.0 | — |
 
    **Version matrix — how `kind_version` / `node_image` / `istio_version` / `kubectl_version` fit together**
@@ -40,15 +40,15 @@ kind-create-cluster/
      table below).
    - `node_image`'s Kubernetes version must sit inside the target Istio's
      [supported range](https://istio.io/latest/docs/releases/supported-releases/).
-   - `istio_label` **must equal** `istio_version` (dots → dashes, e.g. `1.29.2` →
-     `1-29-2`); always change the two together.
+   - `istio_label` **must equal** `istio_version` (dots → dashes, e.g. `1.29.4` →
+     `1-29-4`); always change the two together.
    - `kubectl_version` should track `node_image`'s Kubernetes minor (skew tolerates ±1).
 
    Vetted combinations (all on kind v0.30.0):
 
    | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
    |---|---|---|---|---|---|
-   | v0.30.0 | 1.29.2 | 1-29-2 | `kindest/node:v1.34.0` | 1.31 – 1.35 | v1.34.8 |
+   | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0` | 1.31 – 1.35 | v1.34.8 |
    | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.x |
 
    Fall-back default `node_image` when `node_image` is left empty (`scripts/create_cluster.sh`):
@@ -220,10 +220,10 @@ See [issue #30](https://github.com/benchen149/kind-create-cluster/issues/30) for
 ```
 # kind version is defined in config/config.env (kind_version)
 [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/${kind_version}/kind-linux-amd64
-wget "https://github.com/istio/istio/releases/download/1.29.2/istio-1.29.2-linux-amd64.tar.gz" -O - | tar -xz 
+wget "https://github.com/istio/istio/releases/download/1.29.4/istio-1.29.4-linux-amd64.tar.gz" -O - | tar -xz 
 cp tools/istio/operator/cluster.yaml  .
 # 統一檔需帶入 cluster 差異參數再 envsubst（c1 範例：cluster1 / network1）
-istio_label=1-29-2 CLUSTER_NAME=cluster1 NETWORK_NAME=network1 \
+istio_label=1-29-4 CLUSTER_NAME=cluster1 NETWORK_NAME=network1 \
   envsubst '$istio_label $CLUSTER_NAME $NETWORK_NAME' < cluster.yaml | istioctl install -y -f -
 
 ```
