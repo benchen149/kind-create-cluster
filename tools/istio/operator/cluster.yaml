@@ -5,8 +5,6 @@ spec:
   revision: ${istio_label}
   meshConfig:
     accessLogFile: /dev/stdout
-    defaultConfig:
-      holdApplicationUntilProxyStarts: true
   components:
     ingressGateways:
     - enabled: true
@@ -21,6 +19,10 @@ spec:
           - name: PILOT_FILTER_GATEWAY_CLUSTER_CONFIG
             value: "true"
           - name: PILOT_HTTP10
+            value: "true"
+          # Istio 1.29+：改用 native sidecar（init container, restartPolicy: Always），
+          # 取代 meshConfig.defaultConfig.holdApplicationUntilProxyStarts
+          - name: ENABLE_NATIVE_SIDECARS
             value: "true"
         overlays:
         - apiVersion: apps/v1
@@ -38,6 +40,9 @@ spec:
     global:
       variant: debug
       meshID: mesh1
+      # cluster 差異參數化：由安裝腳本 envsubst 帶入每個 cluster 的值
+      #   c1（multi / single 共用）：CLUSTER_NAME=cluster1 NETWORK_NAME=$NETWORK_CLUSTER1
+      #   c2                        ：CLUSTER_NAME=cluster2 NETWORK_NAME=$NETWORK_CLUSTER2
       multiCluster:
-        clusterName: cluster2
-      network: ${NETWORK_CLUSTER2}
+        clusterName: ${CLUSTER_NAME}
+      network: ${NETWORK_NAME}
