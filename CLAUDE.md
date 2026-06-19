@@ -50,7 +50,7 @@ issue → feature branch → commit → PR → merge to 1-feat-develop → sync 
 | Component | Version | Kubernetes |
 |-----------|---------|------------|
 | kind | v0.30.0 | v1.34.0 |
-| Istio | 1.29.2 | 1.31–1.35 |
+| Istio | 1.29.4 | 1.31–1.35 |
 | Kiali | v1.49.0 | — |
 
 版本設定檔：`config/config.env`
