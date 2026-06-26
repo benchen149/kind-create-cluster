@@ -4,7 +4,7 @@
 
 resolve_istio_versions() {
     case "$1" in
-        1.13.5) echo "v0.14.0 kindest/node:v1.24.0 v1.24.17"  ;;
+        1.13.5) echo "v0.14.0 kindest/node:v1.23.6 v1.23.17"   ;;
         1.24.0) echo "v0.30.0 kindest/node:v1.31.12 v1.31.6"   ;;
         1.29.4) echo "v0.30.0 kindest/node:v1.34.0 v1.34.8"    ;;
         *)      return 1 ;;
