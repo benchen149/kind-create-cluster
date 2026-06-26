@@ -48,8 +48,9 @@ kind-create-cluster/
 
    | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
    |---|---|---|---|---|---|
-   | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0` | 1.31 – 1.35 | v1.34.8 |
-   | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.x |
+   | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0`  | 1.31 – 1.35 | v1.34.8  |
+   | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.6  |
+   | v0.14.0 | 1.13.5 | 1-13-5 | `kindest/node:v1.24.0`  | 1.20 – 1.24 | v1.24.17 |
 
    Fall-back default `node_image` when `node_image` is left empty (`scripts/create_cluster.sh`):
 
