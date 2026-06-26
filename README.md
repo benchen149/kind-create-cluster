@@ -48,8 +48,9 @@ kind-create-cluster/
 
    | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
    |---|---|---|---|---|---|
-   | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0` | 1.31 – 1.35 | v1.34.8 |
-   | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.x |
+   | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0`  | 1.31 – 1.35 | v1.34.8  |
+   | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.6  |
+   | v0.14.0 | 1.13.5 | 1-13-5 | `kindest/node:v1.23.6`  | 1.20 – 1.24 | v1.23.17 |
 
    Fall-back default `node_image` when `node_image` is left empty (`scripts/create_cluster.sh`):
 
@@ -68,6 +69,19 @@ kind-create-cluster/
    | `make c1c2-singlenet` | Dual clusters (c1 + c2) with sidecar mode Istio multi-primary mesh (single network) |
    | `make c1c2-install-ewgw` | Build dual clusters and install istio-eastwestgateway (includes c1c2-singlenet) |
    | `make clean` | Delete all kind clusters and clear download cache |
+
+   **Inline Istio version override** — pass `istio=<version>` to use a different Istio version without editing `config/config.env`:
+
+   ```bash
+   make c1-sidecar istio=1.13.5
+   make c1c2-singlenet istio=1.24.0
+   make c1c2-install-ewgw istio=1.29.4
+   ```
+
+   - Kind, K8s node image, and kubectl versions are resolved automatically from the built-in version matrix.
+   - If the version differs from the current `config/config.env` default, `make clean` is triggered automatically to clear stale cache.
+   - Passing an unsupported version prints an error with the supported version list.
+   - The override is **one-time only** — `config/config.env` is never modified.
 
 3. **Or run the script directly**
    ```
