@@ -70,6 +70,19 @@ kind-create-cluster/
    | `make c1c2-install-ewgw` | Build dual clusters and install istio-eastwestgateway (includes c1c2-singlenet) |
    | `make clean` | Delete all kind clusters and clear download cache |
 
+   **Inline Istio version override** — pass `istio=<version>` to use a different Istio version without editing `config/config.env`:
+
+   ```bash
+   make c1-sidecar istio=1.13.5
+   make c1c2-singlenet istio=1.24.0
+   make c1c2-install-ewgw istio=1.29.4
+   ```
+
+   - Kind, K8s node image, and kubectl versions are resolved automatically from the built-in version matrix.
+   - If the version differs from the current `config/config.env` default, `make clean` is triggered automatically to clear stale cache.
+   - Passing an unsupported version prints an error with the supported version list.
+   - The override is **one-time only** — `config/config.env` is never modified.
+
 3. **Or run the script directly**
    ```
    # single cluster
