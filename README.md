@@ -23,7 +23,7 @@ kind-create-cluster/
 
    | Component | Version | Kubernetes |
    |---|---|---|
-   | kind | v0.30.0 | v1.34.0 |
+   | kind | v0.32.0 | v1.34.8 |
    | Istio | 1.29.4 | 1.31 – 1.35 |
    | Kiali | v1.49.0 | — |
 
@@ -44,18 +44,60 @@ kind-create-cluster/
      `1-29-4`); always change the two together.
    - `kubectl_version` should track `node_image`'s Kubernetes minor (skew tolerates ±1).
 
-   Vetted combinations (all on kind v0.30.0):
+   Vetted combinations:
 
    | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
    |---|---|---|---|---|---|
+   | v0.32.0 **(default)** | 1.29.4 | 1-29-4 | `kindest/node:v1.34.8`  | 1.31 – 1.35 | v1.34.8  |
    | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0`  | 1.31 – 1.35 | v1.34.8  |
    | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.6  |
    | v0.14.0 | 1.13.5 | 1-13-5 | `kindest/node:v1.23.6`  | 1.20 – 1.24 | v1.23.17 |
+
+   kind v0.32.0 ships four node images — `v1.36.1`（預設）/ `v1.35.5` / `v1.34.8` /
+   `v1.33.12`. Note the **default** (`v1.36.1`) falls *outside* Istio 1.29.4's supported
+   K8s range (1.31 – 1.35), so it must not be left empty for this combination — pin
+   `node_image` explicitly to `v1.35.5` or `v1.34.8`. Also note kind v0.32.0 dropped
+   support for `v1.32.x` / `v1.31.x` node images that earlier kind versions shipped.
+
+   **Extending the matrix to a new Istio version**
+
+   1. Look up the target Istio minor's supported K8s range on the
+      [official support-status table](https://istio.io/latest/docs/releases/supported-releases/).
+   2. `node_image` must be a tag that `kindest/node` actually publishes — not every
+      upstream K8s patch gets a matching image (e.g. `kindest/node:v1.34.7` does not
+      exist; the closest is `v1.34.8`). Check available tags on
+      [Docker Hub](https://hub.docker.com/r/kindest/node/tags) before picking a version;
+      an arbitrary K8s patch number will fail to pull.
+   3. Pick a `node_image` from the **middle** of the Istio-supported range, not the top or bottom edge —
+      this leaves headroom on both sides so a later kind or Istio patch bump doesn't
+      immediately fall outside the tested window.
+   4. Only then check whether the `kind_version` already pinned in this repo ships that
+      `node_image` (see the ships-list note above); if not, either bump `kind_version` or
+      pick a different mid-range `node_image` that an already-pinned kind version does
+      ship. `kind_version` is otherwise independent of `istio_version`.
+   5. Set `kubectl_version` to the same string as `node_image` (e.g. `node_image=v1.32.8`
+      → `kubectl_version=v1.32.8`) — since `node_image` tags are real upstream K8s
+      release versions, an exact-match kubectl build always exists and guarantees zero
+      version skew.
+
+   Candidate combinations for Istio 1.25 – 1.28 (all on kind v0.30.0, mid-range
+   `node_image` per the rule above), derived from Istio's supported-K8s table but
+   **not yet cluster-tested in this repo** — run `make c1-sidecar istio=<version>` and
+   confirm the cluster comes up healthy before promoting a row into "Vetted
+   combinations" above:
+
+   | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
+   |---|---|---|---|---|---|
+   | v0.30.0 | 1.25.5 | 1-25-5 | `kindest/node:v1.31.12` | 1.29 – 1.32 | v1.31.12 |
+   | v0.30.0 | 1.26.8 | 1-26-8 | `kindest/node:v1.32.8`  | 1.29 – 1.33 | v1.32.8  |
+   | v0.30.0 | 1.27.9 | 1-27-9 | `kindest/node:v1.32.8`  | 1.29 – 1.33 | v1.32.8  |
+   | v0.30.0 | 1.28.10 | 1-28-10 | `kindest/node:v1.32.8` | 1.30 – 1.34 | v1.32.8  |
 
    Fall-back default `node_image` when `node_image` is left empty (`scripts/create_cluster.sh`):
 
    | kind_version | default node_image |
    |---|---|
+   | v0.32.0 | `kindest/node:v1.36.1` |
    | v0.30.0 | `kindest/node:v1.34.0` |
    | v0.26.0 | `kindest/node:v1.29.2` |
    | v0.23.0 | `kindest/node:v1.27.3` |
