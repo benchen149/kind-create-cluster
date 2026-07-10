@@ -146,6 +146,18 @@ kind-create-cluster/
    - Passing an unsupported version prints an error with the supported version list.
    - The override is **one-time only** — `config/config.env` is never modified.
 
+   **Log output** — every run is teed to a timestamped log file under `/tmp/kind-create-cluster-logs/`
+   (not tracked in git), so a failed run can be inspected after the terminal is gone:
+
+   ```
+   [log] /tmp/kind-create-cluster-logs/c1-sidecar-1.29.4-20260710-143022.log
+   ...
+   [log saved] /tmp/kind-create-cluster-logs/c1-sidecar-1.29.4-20260710-143022.log
+   ```
+
+   Override the directory with `LOG_DIR=...`. The command's exit code still propagates
+   through `tee`, so CI/script failures are still detected correctly.
+
 3. **Or run the script directly**
    ```
    # single cluster
