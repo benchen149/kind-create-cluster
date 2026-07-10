@@ -8,13 +8,11 @@ help:
 	@echo "  make clean               Delete all kind clusters and clear download cache"
 
 c1-sidecar:
-	@sed -i 's/^cluster_mode=.*/cluster_mode=single/' config/config.env
-	@bash scripts/apply_version_override.sh "$(istio)"
+	@bash scripts/apply_version_override.sh "$(istio)" single
 	bash scripts/main.sh
 
 c1c2-singlenet:
-	@sed -i 's/^cluster_mode=.*/cluster_mode=multi/' config/config.env
-	@bash scripts/apply_version_override.sh "$(istio)"
+	@bash scripts/apply_version_override.sh "$(istio)" multi
 	bash scripts/main.sh
 
 c1c2-install-ewgw: c1c2-singlenet
