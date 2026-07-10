@@ -23,7 +23,7 @@ kind-create-cluster/
 
    | Component | Version | Kubernetes |
    |---|---|---|
-   | kind | v0.32.0 | v1.34.8 |
+   | kind | v0.30.0 | v1.34.0 |
    | Istio | 1.29.4 | 1.31 – 1.35 |
    | Kiali | v1.49.0 | — |
 
@@ -48,16 +48,24 @@ kind-create-cluster/
 
    | kind_version | istio_version | istio_label | node_image (K8s) | Istio-supported K8s | kubectl_version |
    |---|---|---|---|---|---|
-   | v0.32.0 **(default)** | 1.29.4 | 1-29-4 | `kindest/node:v1.34.8`  | 1.31 – 1.35 | v1.34.8  |
-   | v0.30.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0`  | 1.31 – 1.35 | v1.34.8  |
+   | v0.30.0 **(default)** | 1.29.4 | 1-29-4 | `kindest/node:v1.34.0`  | 1.31 – 1.35 | v1.34.8  |
    | v0.30.0 | 1.24.0 | 1-24-0 | `kindest/node:v1.31.12` | 1.28 – 1.31 | v1.31.6  |
    | v0.14.0 | 1.13.5 | 1-13-5 | `kindest/node:v1.23.6`  | 1.20 – 1.24 | v1.23.17 |
+   | v0.32.0 | 1.29.4 | 1-29-4 | `kindest/node:v1.34.8`  | 1.31 – 1.35 | v1.34.8  |
 
-   kind v0.32.0 ships four node images — `v1.36.1`（預設）/ `v1.35.5` / `v1.34.8` /
-   `v1.33.12`. Note the **default** (`v1.36.1`) falls *outside* Istio 1.29.4's supported
-   K8s range (1.31 – 1.35), so it must not be left empty for this combination — pin
-   `node_image` explicitly to `v1.35.5` or `v1.34.8`. Also note kind v0.32.0 dropped
-   support for `v1.32.x` / `v1.31.x` node images that earlier kind versions shipped.
+   `kind_version=v0.30.0` is deliberately shared between istio 1.24.0 and 1.29.4 — its
+   node image lineup (`v1.34.0` / `v1.33.4` / `v1.32.8` / `v1.31.12`) already covers both
+   Istio ranges, so there's no need to also maintain kind v0.32.0 as a second binary just
+   for 1.29.4. Only two kind binaries are needed in total for all three vetted Istio
+   versions: `v0.14.0` (for 1.13.5, whose 1.20–1.24 range no newer kind ships images for)
+   and `v0.30.0` (for 1.24.0 and 1.29.4).
+
+   kind v0.32.0 remains a valid alternative for 1.29.4 if you want a newer kind binary —
+   it ships four node images: `v1.36.1`（預設）/ `v1.35.5` / `v1.34.8` / `v1.33.12`. Note
+   the **default** (`v1.36.1`) falls *outside* Istio 1.29.4's supported K8s range
+   (1.31 – 1.35), so it must not be left empty for this combination — pin `node_image`
+   explicitly to `v1.35.5` or `v1.34.8`. Also note kind v0.32.0 dropped support for
+   `v1.32.x` / `v1.31.x` node images that earlier kind versions shipped.
 
    **Extending the matrix to a new Istio version**
 
