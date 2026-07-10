@@ -3,12 +3,17 @@ set -e
 
 abspath=$(cd "$(dirname "$0")/.."; pwd)
 OVERRIDE_FILE="$abspath/config/.override.env"
+cluster_mode="$2"
 
 # Always wipe stale override first (next bare `make` restores defaults)
 rm -f "$OVERRIDE_FILE"
 
-# No override requested
-[[ -z "$1" ]] && exit 0
+# No istio override requested: still record cluster_mode (if any) so the
+# Makefile never has to mutate the git-tracked config.env.
+if [[ -z "$1" ]]; then
+    [[ -n "$cluster_mode" ]] && echo "cluster_mode=$cluster_mode" > "$OVERRIDE_FILE"
+    exit 0
+fi
 
 source "$abspath/config/version-matrix.sh"
 
@@ -36,5 +41,6 @@ kind_version=$kind_ver
 node_image="$node_img"
 kubectl_version=$kubectl_ver
 EOF
+[[ -n "$cluster_mode" ]] && echo "cluster_mode=$cluster_mode" >> "$OVERRIDE_FILE"
 
 echo "Version override: Istio $1 / kind $kind_ver / K8s ${node_img##*:} / kubectl $kubectl_ver"

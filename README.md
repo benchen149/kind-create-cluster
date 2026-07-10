@@ -2,6 +2,19 @@
 
 ---
 
+#### Quick Start
+
+```bash
+make c1-sidecar                          # single cluster + sidecar mode Istio (default 1.29.4)
+make c1c2-singlenet                      # dual clusters, single network
+make c1c2-install-ewgw istio=1.29.4      # dual clusters + east-west gateway
+make clean                               # delete all kind clusters
+```
+
+See [Getting Started](#getting-started) below for version configuration details.
+
+---
+
 #### Directory Structure
 
 ```
