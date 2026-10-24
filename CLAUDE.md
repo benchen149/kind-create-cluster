@@ -33,12 +33,12 @@ issue → feature branch → commit → PR → merge to 1-feat-develop → sync 
 新環境第一次執行 `/setup-github-ssh` 完成設定：
 - SSH key 產生（必須設定 passphrase）
 - GitHub known_hosts fingerprint 驗證
-- `gh` CLI 登入（Fine-grained Token，限定單一 repo）
+- `gh` CLI 登入（Fine-grained Token，一台電腦一個）
 - git config user.email / user.name
 
 ### GitHub Token（gh CLI）
 
-- 使用 Fine-grained Personal Access Token，限定此 repo
+- 使用 Fine-grained Personal Access Token，一台電腦一個，涵蓋這台電腦要開發的 repo（`gh` 每台電腦只存一組 github.com 登入，所有 repo 共用）
 - 最小權限：Contents / Issues / Pull requests Read & Write、Metadata Read-only
 - 有效期：建議 90 天
 - 儲存位置：`~/.config/gh/hosts.yml`（明文，不可納入 git）
