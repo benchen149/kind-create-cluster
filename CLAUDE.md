@@ -11,7 +11,7 @@
 所有功能開發皆走 **GitHub Flow**：
 
 ```
-issue → feature branch → commit → PR → merge to 1-feat-develop → sync PR → merge to main
+issue → feature branch → commit → PR → merge to develop → sync PR → merge to main
 ```
 
 使用 `/github-flow` slash command 自動引導整個流程。
@@ -20,11 +20,11 @@ issue → feature branch → commit → PR → merge to 1-feat-develop → sync 
 
 | Branch | 用途 |
 |--------|------|
-| `main` | 穩定版本，只接受來自 `1-feat-develop` 的 PR merge |
-| `1-feat-develop` | 主要開發 branch，feature branch 從此切出、PR 也 merge 回此 |
+| `main` | 穩定版本，只接受來自 `develop` 的 PR merge |
+| `develop` | 主要開發 branch，feature branch 從此切出、PR 也 merge 回此 |
 | `{issue-number}-{slug}` | Feature branch，merge 後自動刪除 |
 
-**絕對不可刪除 `main` 與 `1-feat-develop`。**
+**絕對不可刪除 `main` 與 `develop`。**
 
 ---
 
@@ -33,12 +33,12 @@ issue → feature branch → commit → PR → merge to 1-feat-develop → sync 
 新環境第一次執行 `/setup-github-ssh` 完成設定：
 - SSH key 產生（必須設定 passphrase）
 - GitHub known_hosts fingerprint 驗證
-- `gh` CLI 登入（Fine-grained Token，限定單一 repo）
+- `gh` CLI 登入（Fine-grained Token，一台電腦一個）
 - git config user.email / user.name
 
 ### GitHub Token（gh CLI）
 
-- 使用 Fine-grained Personal Access Token，限定此 repo
+- 使用 Fine-grained Personal Access Token，一台電腦一個，涵蓋這台電腦要開發的 repo（`gh` 每台電腦只存一組 github.com 登入，所有 repo 共用）
 - 最小權限：Contents / Issues / Pull requests Read & Write、Metadata Read-only
 - 有效期：建議 90 天
 - 儲存位置：`~/.config/gh/hosts.yml`（明文，不可納入 git）
@@ -91,4 +91,4 @@ issue → feature branch → commit → PR → merge to 1-feat-develop → sync 
 - known_hosts 加入前必須對比 GitHub 官方 fingerprint
 - `gh` CLI token 不可提交至任何 repo 或 dotfiles
 - `~/.ssh/id_ed25519` 不可複製到他處或提交至任何 repo
-- Feature branch merge 後自動刪除，`main`、`1-feat-develop` 永遠保留
+- Feature branch merge 後自動刪除，`main`、`develop` 永遠保留
